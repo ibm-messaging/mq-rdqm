@@ -3,9 +3,9 @@ Repository for the Replicated Data Queue Manager feature of IBM MQ
 
 Frequently Asked Questions, with answers, are [here](FAQs.md)
 
-Hints and Tips are [here](https://github.com/ibm-messaging/mq-rdqm/tree/master/Hints-And-Tips.md)
+Hints and Tips are [here](Hints-And-Tips.md)
 
-Useful links are [here](https://github.com/ibm-messaging/mq-rdqm/tree/master/Links.md)
+Useful links are [here](Links.md)
 
 
 ## Contributions
