@@ -1,0 +1,281 @@
+---
+# © Copyright IBM Corporation 2017
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template creates a deployment of three Instances in an AWS Region,
+  one Instance in each of three Availability Zones in the Region. This version of the
+  template creates a new VPC and Bastion server. **WARNING** This template creates EC2
+  instances and related resources. You will be billed for the AWS resources used if you create
+  a stack from this template.
+#
+# Metadata for people that wish to create a stack in the console.
+#
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "HA Group"
+        Parameters:
+          - GroupName
+      -
+        Label:
+          default: "AMIs"
+        Parameters:
+          - AmiForMQ
+      -
+        Label:
+          default: "Instance Types"
+        Parameters:
+          - InstanceTypeForMQ
+  ParameterLabels:
+    GroupName:
+      default: "Name of the HA Group (used to name the AWS resources created)"
+    AmiForMQ:
+      default: "The AMI to use to create the three RDQM nodes"
+    InstanceTypeForMQ:
+      default: "The instance type to use to create the three RDQM nodes"
+Parameters:
+  GroupName:
+    Description: "The name of the RDQM HA Group to be created. This name is used to generate the names of the various AWS resources that are created for this HA Group."
+    Type: String
+    Default: rdqm-group1
+  InstanceTypeForMQ:
+    Description: "The instance type to use for the three instances that run RDQM."
+    Type: String
+    Default: m5.2xlarge
+    AllowedValues:
+    - m5.2xlarge
+    - d2.8xlarge
+Resources:
+  VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        -
+          Key: Network
+          Value: Public
+  GatewayToInternet:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayID:
+        Ref: InternetGateway
+      VpcId:
+        Ref: VPC
+  RouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId:
+        Ref: VPC
+  SubnetARouteTableAssoc:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      SubnetId:
+        Ref: SubnetA
+  SubnetBRouteTableAssoc:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      SubnetId:
+        Ref: SubnetB
+  SubnetCRouteTableAssoc:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      SubnetId:
+        Ref: SubnetC
+  InternetGatewayRoute:
+    Type: "AWS::EC2::Route"
+    DependsOn: GatewayToInternet
+    Properties:
+      RouteTableId:
+        Ref: RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+#
+# Create a subnet for the node in the first Availability Zone.
+# As we are creating a new subnet we can hard-code the IP subnet
+#
+  SubnetA:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: 
+        Fn::Select: 
+          - 0
+          - Fn::GetAZs: ""
+      MapPublicIpOnLaunch: 'true'
+      VpcId:
+        Ref: VPC
+      CidrBlock: 10.0.1.0/24
+#
+# Create a subnet for the node in the second Availability Zone.
+# As we are creating a new subnet we can hard-code the IP subnet
+#
+  SubnetB:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: 
+        Fn::Select: 
+          - 1
+          - Fn::GetAZs: ""
+      MapPublicIpOnLaunch: 'true'
+      VpcId:
+        Ref: VPC
+      CidrBlock: 10.0.2.0/24
+#
+# Create a subnet for the node in the third Availability Zone.
+# As we are creating a new subnet we can hard-code the IP subnet
+#
+  SubnetC:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: 
+        Fn::Select: 
+          - 2
+          - Fn::GetAZs: ""
+      MapPublicIpOnLaunch: 'true'
+      VpcId:
+        Ref: VPC
+      CidrBlock: 10.0.2.0/24
+  #
+  # Instance in first Availability Zone
+  #
+  InstanceA:
+    Type: "AWS::EC2::Instance"
+    DependsOn: GatewayToInternet
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sdb"
+          Ebs:
+            VolumeType: "io1"
+            Iops: "1300"
+            VolumeSize: "256"
+      EbsOptimized: 'true'
+      ImageId:
+        Ref: AMI
+      InstanceType:
+        Ref: InstanceTypeParameter
+      KeyName:
+        Ref: KeyName
+      SecurityGroupIds:
+        Ref: InstanceSecurityGroup
+        Ref: DRBDSecurityGroup
+        Ref: PacemakerSecurityGroup
+        Ref: MQSecurityGroup
+        Ref: RDQMSecurityGroup
+      SubnetId:
+        Ref: SubnetA
+      Tags:
+        -
+          Key: Name
+          Value: Public        
+  MQSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPCID
+      GroupDescription: Enable SSH access via port 22, and access to 1414 and 9443
+        via ELB
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        SourceSecurityGroupId: !Ref BastionSecurityGroupID
+      - IpProtocol: tcp
+        FromPort: '1414'
+        ToPort: '1414'
+        SourceSecurityGroupId: !Ref MQELBSecurityGroup
+      - IpProtocol: tcp
+        FromPort: '9443'
+        ToPort: '9443'
+        SourceSecurityGroupId: !Ref MQELBSecurityGroup
+  MQELBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPCID
+      GroupDescription: Enable access via port 1414 and 9443
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '1414'
+        ToPort: '1414'
+        CidrIp: !Ref ClientAppAccessCIDR
+      - IpProtocol: tcp
+        FromPort: '9443'
+        ToPort: '9443'
+        CidrIp: !Ref AdminConsoleAccessCIDR
+    Properties:
+      AssociatePublicIpAddress: false
+      ImageId:
+        Fn::FindInMap:
+        - AWSAMIRegionMap
+        - !Ref AWS::Region
+        - IBMMQ903US1604
+      InstanceType: !Ref MQInstanceType
+      KeyName: !Ref KeyPairName
+      SecurityGroups:
+      - !Ref MQSecurityGroup
+      IamInstanceProfile: !Ref InstanceProfile
+      UserData:
+        Fn::Base64:
+          Fn::Sub: |
+            #!/bin/bash
+            /usr/local/bin/cfn-init --stack ${AWS::StackName} --resource LaunchConfiguration --configsets InstallConfig --region ${AWS::Region}
+            # Signal the status from cfn-init
+            /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      CrossZone: true
+      LoadBalancerName:
+        Fn::Sub: ibm-mq-elb-${AWS::AccountId}
+      Listeners:
+      - InstancePort: '1414'
+        InstanceProtocol: TCP
+        LoadBalancerPort: '1414'
+        Protocol: TCP
+      - InstancePort: '9443'
+        InstanceProtocol: TCP
+        LoadBalancerPort: '9443'
+        Protocol: TCP
+      HealthCheck:
+        HealthyThreshold: '2'
+        Interval: '10'
+        Target: TCP:1414
+        Timeout: '5'
+        UnhealthyThreshold: '2'
+      SecurityGroups:
+      - !Ref MQELBSecurityGroup
+      Subnets:
+      - !Ref PublicSubnet1ID
+      - !Ref PublicSubnet2ID
+Outputs:
+  MQRestApiURL:
+    Description: URL for Elastic Load Balancer to connect to REST API
+    Value:
+      Fn::Sub: https://${LoadBalancer.DNSName}:9443/ibmmq/rest/v1/
+  MQConsoleURL:
+    Description: URL for Elastic Load Balancer to connect to MQ Console
+    Value:
+      Fn::Sub: https://${LoadBalancer.DNSName}:9443/ibmmq/console/
+...

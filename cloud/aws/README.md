@@ -117,7 +117,7 @@ Create your image by running `Actions > Image > Create Image` and note the ID id
 
 ## Create a stack using this AMI
 
-You can use the AMI you created to create a stack. If you use the supplied createStack it will create:
+You can use the AMI you created to create a stack. You can create a stack in the AWS console or with the supplied createStack script. If you use the supplied CloudFormation template it will create:
 
 1. a Virtual Private Cloud (VPC) to contain the other resources
 2. an InternetGateway to allow access to the virtual servers over the Internet
