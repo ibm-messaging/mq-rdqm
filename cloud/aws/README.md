@@ -14,14 +14,13 @@ The description of creating the AMI below includes setting up the sudo access. S
 
 ## Creating a new AMI
 
-I created an instance in the AWS Console using the AMI `Red Hat Enterprise Linux 7.4 (HVM), SSD Volume Type - ami-9fa343e7`
+I created an instance in the AWS Console using the AMI `Red Hat Enterprise Linux 7.4 (HVM), SSD Volume Type - ami-223f945a`
 
 When choosing an instance type for your instances the two main factors as far as the performance of RDQM are concerned are the storage performance and the network performance. I suggest that you find an instance type and storage type that supports your desired workload without RDQM and then experiment with the various networking options to find one that allows for the performance you need when RDQM is used.
 
 I chose a size of 16GB for the initial storage volume.
 
-RDQM requires a volume group named drbdpool so I am going to add a second volume to the AMI to support that. Note that when you create an instance of your AMI the size of the second volume has to be at least as large as the volume used in the AMI. I used an `Amazon EBS Provisioned IOPS SSD (io1)` 
-volume.
+RDQM requires a volume group named drbdpool so I am going to add a second volume to the AMI to support that. Note that when you create an instance of your AMI the size of the second volume has to be at least as large as the volume used in the AMI. I used an `Amazon EBS Provisioned IOPS SSD (io1)` volume.
 
 ### Linux Kernel Configuration
 
@@ -129,9 +128,11 @@ You can use the AMI you created to create a stack. If you use the supplied creat
 7. three Subnets, one for each Availability Zone
 8. three Instances, one for each Availability Zone
 9. a number of SecurityGroups controlling access for various components:
-9. a SecurityGroup that allows ssh access via port 22 to any IP address and allows MQ access to the ports 1414, 1515 and 1616
-10. a SecurityGroup that allows tcp access to any port on any IP address, to allow the DRBD instances to communicate with each other
-11. a SecurityGroup that allows ping access between the three Instances
+   - InstanceSecurityGroup that allows ssh access via port 22 to any IP address
+   - MQSecurityGroup that allows TCP access to the ports 1414, 1515 and 1616
+   - PacemakerSecurityGroup that allows UDP access using the ports that Pacemaker uses
+   - RDQMSecurityGroup that allows ping access
+   - DRBDSecurityGroup that allows tcp access to any port on any IP address, to allow the DRBD instances to communicate with each other
 
 ### createStack command
 
@@ -298,6 +299,8 @@ ip-10-0-3-152.us-west-2.compute.internal
 HA status:                              Normal
 Command '/opt/mqm/bin/rdqmstatus' run with sudo.
 ```
+
+Congratulations, you have got a running RDQM.
 
 ### Deleting the stack
 
