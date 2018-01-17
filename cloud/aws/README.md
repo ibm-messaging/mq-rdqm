@@ -195,6 +195,13 @@ Once the SSH keys have been copied change PasswordAuthentication back to no and 
 
 Test that the mqm user can ssh between all nodes without having to enter a password.
 
+Finally, restore the mqm account:
+
+```
+passwd -d mqm
+passwd -l mqm
+```
+
 ### Configure HA Group
 
 Once ssh is working, as ec2-user on one node edit the file /var/mqm/rdqm.ini and enter the private IP address for each node. The file should look similar to:
