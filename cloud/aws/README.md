@@ -1,8 +1,9 @@
 # Deploying IBM(R) MQ Advanced RDQM on AWS
 
-This sample shows how to deploy the Replicated Data Queue Manager (RDQM) support that is part of IBM MQ Advanced 9.0.4 on Linux to AWS.
+This sample shows how to deploy the Replicated Data Queue Manager (RDQM) support that is part of IBM MQ Advanced.
 
-At the moment RDQM requires Red Hat Enterprise Linux 7.3 or 7.4 on x86_64.
+This version of the sample has several major enhancements:
+1. It uses an AutoScalingGroup in each Availability Zone
 
 This sample includes a CloudFormation Template that creates three Instances, one in each Availability Zone of a Region. A script, ```createStack```, is provided which creates a stack using the AWS CLI so if you wish to use this script you have to install and configure the AWS CLI.
 
