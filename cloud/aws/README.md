@@ -1,11 +1,15 @@
 # Deploying IBM(R) MQ Advanced RDQM on AWS
 
-This sample shows how to deploy the Replicated Data Queue Manager (RDQM) support that is part of IBM MQ Advanced.
+This version of the sample shows how to deploy the Replicated Data Queue Manager
+(RDQM) support that is part of IBM MQ Advanced, in a way that is closer to how a production deployment
+would be done.
 
 This version of the sample has several major enhancements:
-1. It uses an AutoScalingGroup in each Availability Zone
+1. It uses an AutoScalingGroup with a LaunchConfiguration in each Availability Zone to automate the creation of each instance, including replacing an instance automatically if one fails
+2. It uses a separate NetworkInterface for each Instance that is dedicated to RDQM
+3. It creates two LoadBalancers: one for public traffic and one for private traffic
 
-This sample includes a CloudFormation Template that creates three Instances, one in each Availability Zone of a Region. A script, ```createStack```, is provided which creates a stack using the AWS CLI so if you wish to use this script you have to install and configure the AWS CLI.
+The updated CloudFormation Template is written to be deployed into an environment with an existing VPC and bastion hosts so these are no longer created. You will need to supply information about the subnets etc. when you deploy the template.
 
 As three Instances have to be created you will probably want to create your own AMI so that you can do most of the configuration, including installing MQ, only once.
 
@@ -14,8 +18,6 @@ Administration and configuration of RDQM is easiest if the mqm user has some spe
 The description of creating the AMI below includes setting up the sudo access. Setting up the passwordless ssh is done once the instances have been created.
 
 ## Creating a new AMI
-
-I created an instance in the AWS Console using the AMI `Red Hat Enterprise Linux 7.4 (HVM), SSD Volume Type - ami-223f945a`
 
 When choosing an instance type for your instances the two main factors as far as the performance of RDQM are concerned are the storage performance and the network performance. I suggest that you find an instance type and storage type that supports your desired workload without RDQM and then experiment with the various networking options to find one that allows for the performance you need when RDQM is used.
 
@@ -87,17 +89,6 @@ MaxCmdLevel: 904
 LicenseType: Trial
 ```
 
-### Setting up drbdpool
-
-To set up the drbdpool volume group I did:
-
-```
-sudo -s
-yum install lvm2
-pvcreate /dev/nvme1n1
-vgcreate drbdpool /dev/nvme1n1
-```
-
 ### Granting sudo access
 
 To grant the required sudo access to the mqm user, as root I created a file `/etc/sudoers.d/mqm` containing:
@@ -116,120 +107,13 @@ I stop my Instance before creating the AMI so I exited and stopped the Instance 
 
 Create your image by running `Actions > Image > Create Image` and note the ID id the image created.
 
-## Create a stack using this AMI
+## Deploy the template
 
-You can use the AMI you created to create a stack. You can create a stack in the AWS console or with the supplied createStack script. If you use the supplied CloudFormation template it will create:
+When you deploy the template you will be prompted for a lot of information, including the AMI to use where you should specify the ID of the AMI you created.
 
-1. a Virtual Private Cloud (VPC) to contain the other resources
-2. an InternetGateway to allow access to the virtual servers over the Internet
-3. a VPCGatewayAttachment to associate the InternetGateway with the VPC
-4. a RouteTable for the VPC
-5. three SubnetRouteTableAssociations, one for each of the SubnetRouteTableAssociations
-6. a Route that allows access to any of the IP addresses
-7. three Subnets, one for each Availability Zone
-8. three Instances, one for each Availability Zone
-9. a number of SecurityGroups controlling access for various components:
-   - InstanceSecurityGroup that allows ssh access via port 22 to any IP address
-   - MQSecurityGroup that allows TCP access to the ports 1414, 1515 and 1616
-   - PacemakerSecurityGroup that allows UDP access using the ports that Pacemaker uses
-   - RDQMSecurityGroup that allows ping access
-   - DRBDSecurityGroup that allows tcp access to any port on any IP address, to allow the DRBD instances to communicate with each other
+I suggest you update the defaults in your copy of the template to avoid having to enter the same information each time you try deploying the template.
 
-### createStack command
-
-The syntax of the `createStack` command is:
-
-```
-createStack <AMI> <stack name> <instance type> <region> <ssh key pair> <owner>
-```
-
-The arguments are:
-
-1. the ID if the AMI you want to use to create the instances
-2. the name of the stack which is used to generate various resource names
-3. the instance type you want to use for the three instances
-4. the region in which to deploy the stack, which must have three availability zones
-5. the ssh key pair to use to access the instances
-6. the owner of the stack which is used to tag the created resources
-
-The outputs of the stack creation are the public and private IP addresses of the three instances.
-
-You can check the progress of the creation of the stack in the AWS Console or by using the describeStack command.
-
-### describeStack command
-
-The syntax of the `describeStack` command is:
-
-```
-describeStack <stack name> <region>
-```
-
-## Configuring the instances
-
-Once the stack has been created there is some configuration that has to be done on each instance before you can create an HA Group out of the three nodes and create your first RDQM.
-
-### Setting up passwordless ssh
-
-The easiest way to manage RDQM is to enable passwordless ssh for the mqm user in addition to the sudo access that was set up in the AMI.
-
-The first part of enabling passwordless ssh is to do the following on each node as root:
-
-```
-usermod -d /home/mqm mqm
-mkhomedir_helper mqm
-passwd mqm
-su mqm
-ssh-keygen -t rsa -f /home/mqm/.ssh/id_rsa -N ''
-exit
-Edit /etc/ssh/sshd_config and change PasswordAuthentication to yes
-systemctl restart sshd.service
-```
-
-Once these steps have been done, copy the SSH key from each node to both of the other two nodes with commands like:
-
-```
-su mqm
-ssh-copy-id -i /home/mqm/.ssh/id_rsa.pub <private IP address of node>
-```
-
-Once the SSH keys have been copied change PasswordAuthentication back to no and restart the sshd service again.
-
-Test that the mqm user can ssh between all nodes without having to enter a password.
-
-Finally, restore the mqm account:
-
-```
-passwd -d mqm
-passwd -l mqm
-```
-
-### Configure HA Group
-
-Once ssh is working, as ec2-user on one node edit the file /var/mqm/rdqm.ini and enter the private IP address for each node. The file should look similar to:
-
-```
-Node:
-  HA_Replication=10.0.1.134
-Node:
-  HA_Replication=10.0.2.211
-Node:
-  HA_Replication=10.0.3.139
-```
-
-Once the file is correct run the command `rdqmadm -c` which should produce something like:
-
-```
-Configuring the replicated data subsystem.
-The replicated data subsystem has been configured on this node.
-The replicated data subsystem has been configured on
-'ip-10-0-2-244.us-west-2.compute.internal'.
-The replicated data subsystem has been configured on
-'ip-10-0-3-152.us-west-2.compute.internal'.
-The replicated data subsystem configuration is complete.
-Command '/opt/mqm/bin/rdqmadm' run with sudo.
-```
-
-### Create an RDQM
+## Create an RDQM
 
 The simplest command to create an RDQM is something like `crtmqm -p 1414 -sx RDQM1` which should produce something like:
 
@@ -309,13 +193,3 @@ Command '/opt/mqm/bin/rdqmstatus' run with sudo.
 ```
 
 Congratulations, you have got a running RDQM.
-
-### Deleting the stack
-
-You can delete the stack with the `deleteStack` script which takes the same arguments as the `describeStack` script.
-
-## Summary
-
-This sample has shown you how to deploy RDQM to AWS.
-
-Future enhancements will include things like setting up a bastion host and an ElasticLoadBalancer.

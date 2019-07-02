@@ -1,5 +1,5 @@
 ---
-# © Copyright IBM Corporation 2017
+# (C) Copyright IBM Corporation 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This template creates a deployment of three Instances in an AWS Region,
-  one Instance in each of three Availability Zones in the Region. This version of the
-  template creates a new VPC and Bastion server. **WARNING** This template creates EC2
-  instances and related resources. You will be billed for the AWS resources used if you create
-  a stack from this template.
-#
-# Metadata for people that wish to create a stack in the console.
-#
+Description: This template assumes that a VPC and a bastion host have already been set up.
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       -
         Label:
-          default: "HA Group"
+          default: "Network Configuration"
         Parameters:
-          - GroupName
+          - VpcId
+          - PrivateSubnetA
+          - RdqmAddressA
+          - RdqmPrivateSubnetA
+          - PrivateSubnetB
+          - RdqmAddressB
+          - RdqmPrivateSubnetB
+          - PrivateSubnetC
+          - RdqmAddressC
+          - RdqmPrivateSubnetC
+          - PublicSubnetA
+          - PublicSubnetB
+          - PublicSubnetC
+          - ListenerPort1
+          - ListenerPort2
+          - ListenerPort3
       -
         Label:
           default: "AMIs"
@@ -39,243 +47,655 @@ Metadata:
           default: "Instance Types"
         Parameters:
           - InstanceTypeForMQ
+      -
+        Label:
+          default: "SSH keys"
+        Parameters:
+          - KeyName
+      -
+        Label:
+          default: "RDQM Storage"
+        Parameters:
+          - VolumeSize
+          - VolumeType
+          - VolumeIops
   ParameterLabels:
-    GroupName:
-      default: "Name of the HA Group (used to name the AWS resources created)"
+    VpcId:
+      default: "VPC ID"
+    PrivateSubnetA:
+      default: "Private Subnet for default Network Interface in the first Availability Zone"
+    RdqmAddressA:
+      default: "Private IP Address for RDQM Network Interface in the first Availability Zone"
+    RdqmPrivateSubnetA:
+      default: "Private Subnet for RDQM Network Interface in the first Availability Zone"
+    PrivateSubnetB:
+      default: "Private Subnet for default Network Interface in the second Availability Zone"
+    RdqmAddressB:
+      default: "Private IP Address for RDQM Network Interface in the second Availability Zone"
+    RdqmPrivateSubnetB:
+      default: "Private Subnet for RDQM Network Interface in the second Availability Zone"
+    PrivateSubnetC:
+      default: "Private Subnet for default Network Interface in the third Availability Zone"
+    RdqmAddressC:
+      default: "Private IP Address for RDQM Network Interface in the third Availability Zone"
+    RdqmPrivateSubnetC:
+      default: "Private Subnet for RDQM Network Interface in the third Availability Zone"
     AmiForMQ:
       default: "The AMI to use to create the three RDQM nodes"
     InstanceTypeForMQ:
       default: "The instance type to use to create the three RDQM nodes"
+    KeyName:
+        default: "The name of an SSH key pair to use"
+    VolumeSize:
+        default: "The size of the volume to use for RDQM in GiB"
+    VolumeType:
+        default: "The type of the volume to use for RDQM"
+    VolumeIops:
+        default: "The IOPS of the volume to use for RDQM (assumes type is io1)"
 Parameters:
-  GroupName:
-    Description: "The name of the RDQM HA Group to be created. This name is used to generate the names of the various AWS resources that are created for this HA Group."
-    Type: String
-    Default: rdqm-group1
+  VpcId:
+    Type: "AWS::EC2::VPC::Id"
+    Default: vpc-????????
+    Description: "ID of the VPC"
+  PrivateSubnetA:
+    Type: "AWS::EC2::Subnet::Id"
+    Default: subnet-????????
+    Description: "The ID of the Private Subnet for the Instance in the first Availability Zone"
+  RdqmPrivateSubnetA:
+    Type: "AWS::EC2::Subnet::Id"
+    Default: subnet-????????
+    Description: "The ID of the Private Subnet for RDQM in the first Availability Zone"
+  RdqmAddressA:
+    Type: "String"
+    Default: 10.0.128.25
+    Description: "The Private IP Address to use for RDQM in the first Availability Zone"
+  PrivateSubnetB:
+    Type: "AWS::EC2::Subnet::Id"
+    Default: subnet-????????
+    Description: "The ID of the Private Subnet for the Instance in the second Availability Zone"
+  RdqmPrivateSubnetB:
+    Type: "AWS::EC2::Subnet::Id"
+    Default: subnet-????????
+    Description: "The ID of the Private Subnet for RDQM in the second Availability Zone"
+  RdqmAddressB:
+    Type: "String"
+    Default: 10.0.144.25
+    Description: "The Private IP Address to use for RDQM in the second Availability Zone"
+  PrivateSubnetC:
+    Type: "AWS::EC2::Subnet::Id"
+    Default: subnet-????????
+    Description: "The ID of the Private Subnet for the Instance in the third Availability Zone"
+  RdqmPrivateSubnetC:
+    Type: "AWS::EC2::Subnet::Id"
+    Default: subnet-????????
+    Description: "The ID of the Private Subnet for RDQM in the third Availability Zone"
+  RdqmAddressC:
+    Type: "String"
+    Default: 10.0.160.25
+    Description: "The Private IP Address to use for RDQM in the third Availability Zone"
+  PublicSubnetA:
+    Type: "AWS::EC2::Subnet::Id"
+    Default: subnet-????????
+    Description: "The ID of the Public Subnet for the Instance in the first Availability Zone"
+  PublicSubnetB:
+    Type: "AWS::EC2::Subnet::Id"
+    Default: subnet-????????
+    Description: "The ID of the Public Subnet for the Instance in the second Availability Zone"
+  PublicSubnetC:
+    Type: "AWS::EC2::Subnet::Id"
+    Default: subnet-????????
+    Description: "The ID of the Public Subnet for the Instance in the third Availability Zone"
   InstanceTypeForMQ:
-    Description: "The instance type to use for the three instances that run RDQM."
     Type: String
     Default: m5.2xlarge
     AllowedValues:
     - m5.2xlarge
     - d2.8xlarge
+    Description: "The instance type to use for the three instances that run RDQM."
+  AmiForMQ:
+    Type: AWS::EC2::Image::Id
+    Default: ami-?????????????????
+    Description: "The AMI to use for the three Instances that run RDQM."
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "The SSH key pair to use."
+  VolumeSize:
+    Type: "String"
+    Default: "256"
+    Description: "The size of the EBS volume to use for RDQM in GiB"
+  VolumeType:
+    Type: "String"
+    Default: "io1"
+    Description: "The type of the EBS volume to use for RDQM"
+  VolumeIops:
+    Type: "String"
+    Default: "12800"
+    Description: "The IOPS of the EBS volume to use for RDQM (assuming a type of io1)"
+  ListenerPort1:
+    Type: "String"
+    Default: 1501
+    Description: "The port to use for the MQ Listener for the first RDQM"
+  ListenerPort2:
+    Type: "String"
+    Default: 1502
+    Description: "The port to use for the MQ Listener for the second RDQM"
+  ListenerPort3:
+    Type: "String"
+    Default: 1503
+    Description: "The port to use for the MQ Listener for the third RDQM"
 Resources:
-  VPC:
-    Type: "AWS::EC2::VPC"
-    Properties:
-      CidrBlock: "10.0.0.0/16"
-      EnableDnsSupport: 'true'
-      EnableDnsHostnames: 'true'
-  InternetGateway:
-    Type: "AWS::EC2::InternetGateway"
-    Properties:
-      Tags:
-        -
-          Key: Network
-          Value: Public
-  GatewayToInternet:
-    Type: "AWS::EC2::VPCGatewayAttachment"
-    Properties:
-      InternetGatewayID:
-        Ref: InternetGateway
-      VpcId:
-        Ref: VPC
-  RouteTable:
-    Type: "AWS::EC2::RouteTable"
-    Properties:
-      VpcId:
-        Ref: VPC
-  SubnetARouteTableAssoc:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      RouteTableId:
-        Ref: RouteTable
-      SubnetId:
-        Ref: SubnetA
-  SubnetBRouteTableAssoc:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      RouteTableId:
-        Ref: RouteTable
-      SubnetId:
-        Ref: SubnetB
-  SubnetCRouteTableAssoc:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      RouteTableId:
-        Ref: RouteTable
-      SubnetId:
-        Ref: SubnetC
-  InternetGatewayRoute:
-    Type: "AWS::EC2::Route"
-    DependsOn: GatewayToInternet
-    Properties:
-      RouteTableId:
-        Ref: RouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId:
-        Ref: InternetGateway
-#
-# Create a subnet for the node in the first Availability Zone.
-# As we are creating a new subnet we can hard-code the IP subnet
-#
-  SubnetA:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      AvailabilityZone: 
-        Fn::Select: 
-          - 0
-          - Fn::GetAZs: ""
-      MapPublicIpOnLaunch: 'true'
-      VpcId:
-        Ref: VPC
-      CidrBlock: 10.0.1.0/24
-#
-# Create a subnet for the node in the second Availability Zone.
-# As we are creating a new subnet we can hard-code the IP subnet
-#
-  SubnetB:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      AvailabilityZone: 
-        Fn::Select: 
-          - 1
-          - Fn::GetAZs: ""
-      MapPublicIpOnLaunch: 'true'
-      VpcId:
-        Ref: VPC
-      CidrBlock: 10.0.2.0/24
-#
-# Create a subnet for the node in the third Availability Zone.
-# As we are creating a new subnet we can hard-code the IP subnet
-#
-  SubnetC:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      AvailabilityZone: 
-        Fn::Select: 
-          - 2
-          - Fn::GetAZs: ""
-      MapPublicIpOnLaunch: 'true'
-      VpcId:
-        Ref: VPC
-      CidrBlock: 10.0.2.0/24
   #
-  # Instance in first Availability Zone
+  # SecurityGroup definitions
   #
-  InstanceA:
-    Type: "AWS::EC2::Instance"
-    DependsOn: GatewayToInternet
+  DrbdSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
     Properties:
-      BlockDeviceMappings:
-        - DeviceName: "/dev/sdb"
-          Ebs:
-            VolumeType: "io1"
-            Iops: "1300"
-            VolumeSize: "256"
-      EbsOptimized: 'true'
-      ImageId:
-        Ref: AMI
-      InstanceType:
-        Ref: InstanceTypeParameter
-      KeyName:
-        Ref: KeyName
-      SecurityGroupIds:
-        Ref: InstanceSecurityGroup
-        Ref: DRBDSecurityGroup
-        Ref: PacemakerSecurityGroup
-        Ref: MQSecurityGroup
-        Ref: RDQMSecurityGroup
-      SubnetId:
-        Ref: SubnetA
+      GroupDescription: "Allow DRBD traffic"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '0'
+          ToPort: '65535'
+          CidrIp: 0.0.0.0/0
+      VpcId:
+        Ref: VpcId
       Tags:
         -
           Key: Name
-          Value: Public        
-  MQSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+          Value: "DRBD SecurityGroup"
+  InstanceSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
     Properties:
-      VpcId: !Ref VPCID
-      GroupDescription: Enable SSH access via port 22, and access to 1414 and 9443
-        via ELB
+      GroupDescription: "Allow SSH traffic"
       SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: '22'
-        ToPort: '22'
-        SourceSecurityGroupId: !Ref BastionSecurityGroupID
-      - IpProtocol: tcp
-        FromPort: '1414'
-        ToPort: '1414'
-        SourceSecurityGroupId: !Ref MQELBSecurityGroup
-      - IpProtocol: tcp
-        FromPort: '9443'
-        ToPort: '9443'
-        SourceSecurityGroupId: !Ref MQELBSecurityGroup
-  MQELBSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+      VpcId:
+        Ref: VpcId
+      Tags:
+        -
+          Key: Name
+          Value: "Instance SecurityGroup"
+  PacemakerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
     Properties:
-      VpcId: !Ref VPCID
-      GroupDescription: Enable access via port 1414 and 9443
+      GroupDescription: "Allow Pacemaker traffic"
       SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: '1414'
-        ToPort: '1414'
-        CidrIp: !Ref ClientAppAccessCIDR
-      - IpProtocol: tcp
-        FromPort: '9443'
-        ToPort: '9443'
-        CidrIp: !Ref AdminConsoleAccessCIDR
+        -
+          IpProtocol: udp
+          FromPort: '5404'
+          ToPort: '5405'
+          CidrIp: 0.0.0.0/0
+      VpcId:
+        Ref: VpcId
+      Tags:
+        -
+          Key: Name
+          Value: "Pacemaker SecurityGroup"
+  RdqmSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
     Properties:
-      AssociatePublicIpAddress: false
+      GroupDescription: "Allow ping"
+      SecurityGroupIngress:
+        -
+          IpProtocol: icmp
+          FromPort: '-1'
+          ToPort: '-1'
+          CidrIp: 0.0.0.0/0
+      VpcId:
+        Ref: VpcId
+      Tags:
+        -
+          Key: Name
+          Value: "RDQM SecurityGroup"
+  ListenerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Allow MQ traffic to Instances"
+      SecurityGroupIngress:
+        -
+          IpProtocol: tcp
+          FromPort:
+            Ref: ListenerPort1
+          ToPort:
+            Ref: ListenerPort1
+          CidrIp: 0.0.0.0/0
+        -
+          IpProtocol: tcp
+          FromPort:
+            Ref: ListenerPort2
+          ToPort:
+            Ref: ListenerPort2
+          CidrIp: 0.0.0.0/0
+        -
+          IpProtocol: tcp
+          FromPort:
+            Ref: ListenerPort3
+          ToPort:
+            Ref: ListenerPort3
+          CidrIp: 0.0.0.0/0
+      VpcId:
+        Ref: VpcId
+      Tags:
+        -
+          Key: Name
+          Value: "MQ SecurityGroup"
+  #
+  # IAM resources
+  #
+  RootRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "ec2.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies: 
+        - 
+          PolicyName: "root"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - 
+                Effect: "Allow"
+                Action: "*"
+                Resource: "*"
+      RoleName: "RDQM-RootRole"
+  RootInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+        - Ref: RootRole
+      InstanceProfileName: "RDQM-RootInstanceProfile"
+  #
+  # Resources for Availability Zone A
+  #
+  RdqmNetworkInterfaceA:
+    Type: "AWS::EC2::NetworkInterface"
+    Properties:
+      Description: "Network with private RDQM IP address for InstanceA"
+      GroupSet:
+        -  Ref: DrbdSecurityGroup
+        -  Ref: InstanceSecurityGroup
+        -  Ref: PacemakerSecurityGroup
+        -  Ref: RdqmSecurityGroup
+      PrivateIpAddress:
+        Ref: "RdqmAddressA"
+      SubnetId:
+        Ref: RdqmPrivateSubnetA
+  InstanceALaunchConfiguration: 
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      EbsOptimized: 'true'
+      IamInstanceProfile:
+        Ref: "RootInstanceProfile"
       ImageId:
-        Fn::FindInMap:
-        - AWSAMIRegionMap
-        - !Ref AWS::Region
-        - IBMMQ903US1604
-      InstanceType: !Ref MQInstanceType
-      KeyName: !Ref KeyPairName
-      SecurityGroups:
-      - !Ref MQSecurityGroup
-      IamInstanceProfile: !Ref InstanceProfile
-      UserData:
-        Fn::Base64:
-          Fn::Sub: |
-            #!/bin/bash
-            /usr/local/bin/cfn-init --stack ${AWS::StackName} --resource LaunchConfiguration --configsets InstallConfig --region ${AWS::Region}
-            # Signal the status from cfn-init
-            /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
-  LoadBalancer:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
+        Ref: "AmiForMQ"
+      InstanceType:
+        Ref: "InstanceTypeForMQ"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sdb"
+          Ebs:
+            VolumeSize:
+              Ref: "VolumeSize"
+            VolumeType:
+              Ref: "VolumeType"
+            Iops:
+              Ref: "VolumeIops"
+      KeyName:
+        Ref: "KeyName"
+      SecurityGroups: 
+        - Ref: "InstanceSecurityGroup"
+        - Ref: ListenerSecurityGroup
+      UserData: 
+        Fn::Base64: 
+          Fn::Sub:
+          - |
+            #!/bin/bash -x
+            /root/bin/setupRdqmInstance ${NetworkId} && /root/bin/configureRdqm ${RdqmAddressA} ${RdqmAddressB} ${RdqmAddressC}
+          - NetworkId:
+              !Ref "RdqmNetworkInterfaceA"
+  InstanceAGroup: 
+    Type: "AWS::AutoScaling::AutoScalingGroup"
     Properties:
-      CrossZone: true
-      LoadBalancerName:
-        Fn::Sub: ibm-mq-elb-${AWS::AccountId}
-      Listeners:
-      - InstancePort: '1414'
-        InstanceProtocol: TCP
-        LoadBalancerPort: '1414'
+      DesiredCapacity: "1"
+      LaunchConfigurationName: 
+        Ref: "InstanceALaunchConfiguration"
+      LifecycleHookSpecificationList:
+        -  LifecycleHookName: 'LaunchingLifecycleHook'
+           LifecycleTransition: 'autoscaling:EC2_INSTANCE_LAUNCHING'
+      MaxSize: "1"
+      MinSize: "1"
+      Tags:
+        -
+          Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - "InstanceA"
+          PropagateAtLaunch: 'true'
+      TargetGroupARNs:
+        - Ref: ListenerTargetGroup1
+        - Ref: ListenerTargetGroup2
+        - Ref: ListenerTargetGroup3
+        - Ref: PrivateTargetGroup1
+        - Ref: PrivateTargetGroup2
+        - Ref: PrivateTargetGroup3
+      VPCZoneIdentifier:
+        - Ref: PrivateSubnetA      
+#
+# Resources for Availability Zone B
+#
+  RdqmNetworkInterfaceB:
+    Type: "AWS::EC2::NetworkInterface"
+    Properties:
+      Description: "Network with private RDQM IP address for InstanceB"
+      GroupSet:
+        -  Ref: DrbdSecurityGroup
+        -  Ref: InstanceSecurityGroup
+        -  Ref: PacemakerSecurityGroup
+        -  Ref: RdqmSecurityGroup
+      PrivateIpAddress:
+        Ref: "RdqmAddressB"
+      SubnetId:
+        Ref: RdqmPrivateSubnetB
+  InstanceBLaunchConfiguration: 
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      EbsOptimized: 'true'
+      IamInstanceProfile:
+        Ref: "RootInstanceProfile"
+      ImageId:
+        Ref: "AmiForMQ"
+      InstanceType:
+        Ref: "InstanceTypeForMQ"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sdb"
+          Ebs:
+            VolumeSize:
+              Ref: "VolumeSize"
+            VolumeType:
+              Ref: "VolumeType"
+            Iops:
+              Ref: "VolumeIops"
+      KeyName:
+        Ref: "KeyName"
+      SecurityGroups: 
+        - Ref: "InstanceSecurityGroup"
+        - Ref: ListenerSecurityGroup
+      UserData: 
+        Fn::Base64: 
+          Fn::Sub:
+          - |
+            #!/bin/bash -x
+            /root/bin/setupRdqmInstance ${NetworkId} && /root/bin/configureRdqm ${RdqmAddressA} ${RdqmAddressB} ${RdqmAddressC}
+          - NetworkId:
+              !Ref "RdqmNetworkInterfaceB"
+  InstanceBGroup: 
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      DesiredCapacity: "1"
+      LaunchConfigurationName: 
+        Ref: "InstanceBLaunchConfiguration"
+      LifecycleHookSpecificationList:
+        -  LifecycleHookName: 'LaunchingLifecycleHook'
+           LifecycleTransition: 'autoscaling:EC2_INSTANCE_LAUNCHING'
+      MaxSize: "1"
+      MinSize: "1"
+      Tags:
+        -
+          Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - "InstanceB"
+          PropagateAtLaunch: 'true'
+      TargetGroupARNs:
+        - Ref: ListenerTargetGroup1
+        - Ref: ListenerTargetGroup2
+        - Ref: ListenerTargetGroup3
+        - Ref: PrivateTargetGroup1
+        - Ref: PrivateTargetGroup2
+        - Ref: PrivateTargetGroup3
+      VPCZoneIdentifier:
+        - Ref: PrivateSubnetB
+#
+# Resources for Availability Zone C
+#
+  RdqmNetworkInterfaceC:
+    Type: "AWS::EC2::NetworkInterface"
+    Properties:
+      Description: "Network with private RDQM IP address for InstanceC"
+      GroupSet:
+        -  Ref: DrbdSecurityGroup
+        -  Ref: InstanceSecurityGroup
+        -  Ref: PacemakerSecurityGroup
+        -  Ref: RdqmSecurityGroup
+      PrivateIpAddress:
+        Ref: "RdqmAddressC"
+      SubnetId:
+        Ref: RdqmPrivateSubnetC
+  InstanceCLaunchConfiguration: 
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      EbsOptimized: 'true'
+      IamInstanceProfile:
+        Ref: "RootInstanceProfile"
+      ImageId:
+        Ref: "AmiForMQ"
+      InstanceType:
+        Ref: "InstanceTypeForMQ"
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sdb"
+          Ebs:
+            VolumeSize:
+              Ref: "VolumeSize"
+            VolumeType:
+              Ref: "VolumeType"
+            Iops:
+              Ref: "VolumeIops"
+      KeyName:
+        Ref: "KeyName"
+      SecurityGroups: 
+        - Ref: "InstanceSecurityGroup"
+        - Ref: ListenerSecurityGroup
+      UserData: 
+        Fn::Base64: 
+          Fn::Sub:
+          - |
+            #!/bin/bash -x
+            /root/bin/setupRdqmInstance ${NetworkId} && /root/bin/configureRdqm ${RdqmAddressA} ${RdqmAddressB} ${RdqmAddressC}
+          - NetworkId:
+              !Ref "RdqmNetworkInterfaceC"
+  InstanceCGroup: 
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      DesiredCapacity: "1"
+      LaunchConfigurationName: 
+        Ref: "InstanceCLaunchConfiguration"
+      LifecycleHookSpecificationList:
+        -  LifecycleHookName: 'LaunchingLifecycleHook'
+           LifecycleTransition: 'autoscaling:EC2_INSTANCE_LAUNCHING'
+      MaxSize: "1"
+      MinSize: "1"
+      Tags:
+        -
+          Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - "InstanceC"
+          PropagateAtLaunch: 'true'
+      TargetGroupARNs:
+        - Ref: ListenerTargetGroup1
+        - Ref: ListenerTargetGroup2
+        - Ref: ListenerTargetGroup3
+        - Ref: PrivateTargetGroup1
+        - Ref: PrivateTargetGroup2
+        - Ref: PrivateTargetGroup3
+      VPCZoneIdentifier:
+        - Ref: PrivateSubnetC
+  #
+  # Public Network load balancer for the MQ Listeners
+  #
+  PublicListenerLoadBalancer:
+      Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+      Properties:
+        Name: PublicListenerLoadBalancer
+        Scheme: internet-facing
+        Subnets:
+        - Ref: PublicSubnetA
+        - Ref: PublicSubnetB
+        - Ref: PublicSubnetC
+        Tags:
+        - Key: Name
+          Value: "Public MQ Listener LoadBalancer"
+        Type: network
+        IpAddressType: ipv4
+  PublicListener1:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: ListenerTargetGroup1
+      LoadBalancerArn:
+        Ref: PublicListenerLoadBalancer
+      Port:
+        Ref: ListenerPort1
+      Protocol: TCP
+  ListenerTargetGroup1:
+      Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+      Properties:
+        Port:
+          Ref: ListenerPort1
         Protocol: TCP
-      - InstancePort: '9443'
-        InstanceProtocol: TCP
-        LoadBalancerPort: '9443'
+        VpcId:
+          Ref: VpcId
+  PublicListener2:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: ListenerTargetGroup2
+      LoadBalancerArn:
+        Ref: PublicListenerLoadBalancer
+      Port:
+        Ref: ListenerPort2
+      Protocol: TCP
+  ListenerTargetGroup2:
+      Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+      Properties:
+        Port:
+          Ref: ListenerPort2
         Protocol: TCP
-      HealthCheck:
-        HealthyThreshold: '2'
-        Interval: '10'
-        Target: TCP:1414
-        Timeout: '5'
-        UnhealthyThreshold: '2'
-      SecurityGroups:
-      - !Ref MQELBSecurityGroup
-      Subnets:
-      - !Ref PublicSubnet1ID
-      - !Ref PublicSubnet2ID
-Outputs:
-  MQRestApiURL:
-    Description: URL for Elastic Load Balancer to connect to REST API
-    Value:
-      Fn::Sub: https://${LoadBalancer.DNSName}:9443/ibmmq/rest/v1/
-  MQConsoleURL:
-    Description: URL for Elastic Load Balancer to connect to MQ Console
-    Value:
-      Fn::Sub: https://${LoadBalancer.DNSName}:9443/ibmmq/console/
+        VpcId:
+          Ref: VpcId
+  PublicListener3:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: ListenerTargetGroup3
+      LoadBalancerArn:
+        Ref: PublicListenerLoadBalancer
+      Port:
+        Ref: ListenerPort3
+      Protocol: TCP
+  ListenerTargetGroup3:
+      Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+      Properties:
+        Port:
+          Ref: ListenerPort3
+        Protocol: TCP
+        VpcId:
+          Ref: VpcId
+  #
+  # Private Network load balancer for the MQ Listeners
+  #
+  PrivateListenerLoadBalancer:
+      Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+      Properties:
+        Name: PrivateListenerLoadBalancer
+        Scheme: internal
+        Subnets:
+        - Ref: PrivateSubnetA
+        - Ref: PrivateSubnetB
+        - Ref: PrivateSubnetC
+        Tags:
+        - Key: Name
+          Value: "Private MQ Listener LoadBalancer"
+        Type: network
+        IpAddressType: ipv4
+  PrivateTargetGroup1:
+      Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+      Properties:
+        Port:
+          Ref: ListenerPort1
+        Protocol: TCP
+        VpcId:
+          Ref: VpcId
+  PrivateListener1:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: PrivateTargetGroup1
+      LoadBalancerArn:
+        Ref: PrivateListenerLoadBalancer
+      Port:
+        Ref: ListenerPort1
+      Protocol: TCP
+  PrivateTargetGroup2:
+      Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+      Properties:
+        Port:
+          Ref: ListenerPort2
+        Protocol: TCP
+        VpcId:
+          Ref: VpcId
+  PrivateListener2:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: PrivateTargetGroup2
+      LoadBalancerArn:
+        Ref: PrivateListenerLoadBalancer
+      Port:
+        Ref: ListenerPort2
+      Protocol: TCP
+  PrivateTargetGroup3:
+      Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+      Properties:
+        Port:
+          Ref: ListenerPort3
+        Protocol: TCP
+        VpcId:
+          Ref: VpcId
+  PrivateListener3:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: PrivateTargetGroup3
+      LoadBalancerArn:
+        Ref: PrivateListenerLoadBalancer
+      Port:
+        Ref: ListenerPort3
+      Protocol: TCP
 ...
