@@ -293,7 +293,7 @@ Command '/opt/mqm/bin/rdqmstatus' run with sudo.
 
 ## Pacemaker Scenarios
 
-The following scenarios focussing on DRBD are described:
+The following scenarios focussing on Pacemaker are described:
 1. An HA RDQM is not running where it should be
 
 ### Pacemaker Scenario 1: An HA RDQM is not running where it should be
@@ -336,8 +336,6 @@ Full list of resources:
 The main things to notice are:
 1. all three nodes are Online
 2. each HA RDQM is running on the node where it was created: HAQM1 on vm13 etc.
-
-## Pacemaker Scenario 1: an RDQM is not running where it should
 
 To demonstrate this scenario I am going to deliberately prevent HAQM1 from running on vm14 and then attempt to move HAQM1 to vm14.
 
