@@ -208,6 +208,7 @@ Command '/opt/mqm/bin/rdqmstatus' run with sudo.
 The following scenarios focussing on DRBD are described:
 1. Loss of quorum
 2. Loss of a single DRBD connection
+3. Stuck sync
 
 ### DRBD Scenario 1: Loss of quorum
 
@@ -291,12 +292,95 @@ Command '/opt/mqm/bin/rdqmstatus' run with sudo.
 
 </pre>
 
+### DRBD Scenario 3: Stuck sync
+
+Some versions of DRBD had an issue where a sync would appear to be stuck and this will prevent an HA RDQM from failing over to a node when the sync to that node is still in progress.
+
+One way to see this is to use `drbdadm status` which when things are normal produces output like:
+<pre>
+[colgrave@mqhavm13 ~]$ drbdadm status
+haqm1 role:Primary
+  disk:UpToDate
+  mqhavm14.hursley.ibm.com role:Secondary
+    peer-disk:UpToDate
+  mqhavm15.hursley.ibm.com role:Secondary
+    peer-disk:UpToDate
+
+haqm2 role:Secondary
+  disk:UpToDate
+  mqhavm14.hursley.ibm.com role:Primary
+    peer-disk:UpToDate
+  mqhavm15.hursley.ibm.com role:Secondary
+    peer-disk:UpToDate
+
+haqm3 role:Secondary
+  disk:UpToDate
+  mqhavm14.hursley.ibm.com role:Secondary
+    peer-disk:UpToDate
+  mqhavm15.hursley.ibm.com role:Primary
+    peer-disk:UpToDate
+</pre>
+
+If a sync gets stuck then you will see something like:
+<pre>
+[colgrave@mqhavm13 ~]$ drbdadm status
+haqm1 role:Primary
+  disk:UpToDate
+  mqhavm14.hursley.ibm.com role:Secondary
+    peer-disk:UpToDate
+  mqhavm15.hursley.ibm.com role:Secondary
+    <b>replication:SyncSource peer-disk:Inconsistent done:90.91</b>
+
+haqm2 role:Secondary
+  disk:UpToDate
+  mqhavm14.hursley.ibm.com role:Primary
+    peer-disk:UpToDate
+  mqhavm15.hursley.ibm.com role:Secondary
+    peer-disk:UpToDate
+
+haqm3 role:Secondary
+  disk:UpToDate
+  mqhavm14.hursley.ibm.com role:Secondary
+    peer-disk:UpToDate
+  mqhavm15.hursley.ibm.com role:Primary
+    peer-disk:UpToDate
+</pre>
+
+In this case the HA RDQM HAQM1 cannot move to vm15 as the disk on vm15 is Inconsistent.
+
+The done value is the percentage complete. If that value is not increasing you can try disconnecting that replica then connecting it again with the following commands, run as root on vm13:
+<pre>
+drbdadm disconnect haqm1:mqhavm15.hursley.ibm.com
+drbdadm connect haqm1:mqhavm15.hursley.ibm.com
+</pre>
+
+If the replication to both Secondary nodes is stuck you can do the disconnect and connect commands without specifying a node and that will disconnect both connections:
+<pre>
+drbdadm disconnect haqm1
+drbdadm connect haqm1
+</pre>
+
 ## Pacemaker Scenarios
 
 The following scenarios focussing on Pacemaker are described:
-1. An HA RDQM is not running where it should be
+1. Corosync main process was not scheduled
+2. An HA RDQM is not running where it should be
 
-### Pacemaker Scenario 1: An HA RDQM is not running where it should be
+### Pacemaker Scenario 1: Corosync main process was not scheduled
+
+If you see a message in the syslog similar to:
+<pre>
+corosync[10800]:  [MAIN  ] Corosync main process was not scheduled for 2787.0891 ms (threshold is 1320.0000 ms). Consider token timeout increase.
+</pre>
+that is an indication that the system is either too busy to schedule CPU time to the main Corosync process or, more commonly, that the system is a Virtual Machine and the Hypervisor has not scheduled any CPU time to the entire VM.
+
+Both Pacemaker/Corosync and DRBD have timers that are used to detect loss of quorum so messages like this indicate that the node did not run for so long that it would have been dropped from the quorum.
+
+The Corosync timeout is 1.65 seconds and the threshold of 1.32 seconds is 80% of that so the message is printed when the delay in the scheduling of the main Corosync process hits 80% of the timeout. In this case, the process was not scheduled for nearly three seconds which would definitely cause problems.
+
+Whatever is causing this problem needs to be resolved. One thing that might help is to reduce the requirements of the VM, for example reducing the number of vCPUs required, as this makes it easier for the Hypervisor to schedule the VM.
+
+### Pacemaker Scenario 2: An HA RDQM is not running where it should be
 
 The main tool to help troubleshooting in this scenario is `crm status` and the output for this configuration when everything is working as expected is:
 
