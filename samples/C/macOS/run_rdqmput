@@ -1,0 +1,12 @@
+#!/bin/bash
+
+export MQDIR=~/MQ/Client/9.1.1.0
+export DYLD_LIBRARY_PATH=${MQDIR}/lib64
+
+IP1=
+IP2=
+IP3=
+PORT=
+
+export MQSERVER=RDQM.SVRCONN/TCP/${IP1}\(${PORT}\),${IP2}\(${PORT}\),${IP3}\(${PORT}\)
+./rdqmput $*
