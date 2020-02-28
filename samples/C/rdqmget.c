@@ -29,7 +29,7 @@
 #include "log.h"
 #include "options.h"
 
-char buffer[30];
+void *messageBuffer;
 
 MQLONG CompCode;
 MQLONG Reason;
@@ -58,8 +58,9 @@ int getMessage(int batchNumber, int messageNumber) {
 
     GetMsgOpts.Version = MQGMO_VERSION_2;
     GetMsgOpts.MatchOptions = MQMO_NONE;
-    GetMsgOpts.Options = MQGMO_SYNCPOINT |
-                         MQGMO_WAIT      |
+    GetMsgOpts.Options = MQGMO_SYNCPOINT            |
+                         MQGMO_WAIT                 |
+                         MQGMO_ACCEPT_TRUNCATED_MSG |
                          MQGMO_CONVERT;
     GetMsgOpts.WaitInterval = MQWI_UNLIMITED;
 
@@ -73,8 +74,8 @@ int getMessage(int batchNumber, int messageNumber) {
           Hobj,
           &MsgDesc,
           &GetMsgOpts,
-          30,
-          buffer,
+          messageSize,
+          messageBuffer,
           &messlen,
           &CompCode,
           &Reason);
@@ -83,7 +84,19 @@ int getMessage(int batchNumber, int messageNumber) {
             printf("Message %d got successfully\n", messageNumber);
         }
         if (verbosity > 2) {
-            printf("Message is \"%s\"\n", buffer);
+            printf("Message is \"%s\"\n", messageBuffer);
+        }
+    } else if (CompCode == MQCC_WARNING) {
+        if (Reason == MQRC_TRUNCATED_MSG_ACCEPTED) {
+            if (verbosity > 2) {
+                // Terminate buffer as original message was longer
+                ((char *)(messageBuffer))[messageSize - 1] = '\0';
+                printf("Truncated Message is \"%s\"\n", messageBuffer);
+            }
+        } else {
+            // Just give up and log the error
+            rc = 2;
+            logFailure("MQGET", CompCode, Reason);
         }
     } else if (CompCode == MQCC_FAILED) {
         if (Reason == MQRC_BACKED_OUT) {

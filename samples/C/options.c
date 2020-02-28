@@ -28,6 +28,8 @@ long int batchSize = 10;
 long int numberOfBatches = 20;
 long int sleepSeconds = 1;
 long int verbosity = 0;
+size_t messageSize = 2048;
+void *messageBuffer = 0;
 
 MQCHAR48 QMgrName;
 size_t QMgrNameLen;
@@ -67,6 +69,35 @@ int longValueOfOption(char *OptName, char *optarg, long int *valuep) {
     return rc;
 }
 
+int ulongValueOfOption(char *OptName, char *optarg, unsigned long int *valuep) {
+    int rc = 0;
+    unsigned long int value = 0;
+    char *endptr;
+    
+    errno = 0;
+    value = strtol(optarg, &endptr, 10);
+    if ((errno == ERANGE && (value == LONG_MAX || value == LONG_MIN)) ||
+        (errno != 0 && value == 0)) {
+        fprintf(stderr, "Invalid value \"%s\" for %s\n", optarg, OptName);
+        rc = 1;
+    } else if (endptr == optarg) {
+        fprintf(stderr, "No digits were found for %s\n", OptName);
+        rc = 1;
+    } else if (*endptr != '\0') {
+        fprintf(stderr,
+                "Extra characters after number for %s: \"%s\"\n",
+                OptName,
+                endptr);
+        rc = 1;
+    }
+    
+    if (rc == 0) {
+        *valuep = value;
+    }
+    
+    return rc;
+}
+
 int processOptions(int argc, char *argv[]) {
     int rc = 0;
     int opt;
@@ -75,12 +106,17 @@ int processOptions(int argc, char *argv[]) {
     
     opterr = 0;
     
-    while (((opt = getopt(argc, argv, "b:m:p:s:u:v:")) != -1) && (rc == 0)) {
+    while (((opt = getopt(argc, argv, "b:l:m:p:s:u:v:")) != -1) && (rc == 0)) {
         switch (opt) {
             case 'b':
                 rc = longValueOfOption("numberOfBatches",
                                    optarg,
                                    &numberOfBatches);
+                break;
+            case 'l':
+                rc = ulongValueOfOption("messageSize",
+                                        optarg,
+                                        &messageSize);
                 break;
             case 'm':
                 rc = longValueOfOption("batchSize", optarg, &batchSize);
@@ -110,11 +146,15 @@ int processOptions(int argc, char *argv[]) {
                 rc = longValueOfOption("verbosity", optarg, &verbosity);
                 break;
             default:
-                fprintf(stderr, "Usage: rdqmget [-b batches] [-m messages] [-p password] [-s sleep] [-u userid] [-v verbosity] QMgrName QName\n");
+                fprintf(stderr, "Usage: rdqmget [-b batches] [-l message length] [-m messages] [-p password] [-s sleep] [-u userid] [-v verbosity] QMgrName QName\n");
                 rc = 1;
         }
     }
     
+    if (messageSize) {
+        messageBuffer = malloc(messageSize);
+    }
+
     if ((UserIdLen > 0) && !(PasswordLen > 0)) {
         password = getpass("password:");
         if (password != NULL) {
@@ -128,6 +168,7 @@ int processOptions(int argc, char *argv[]) {
     
     if (verbosity > 2) {
         printf("numberOfBatches is %ld\n", numberOfBatches);
+        printf("messageSize is %ld\n", messageSize);
         printf("batchSize is %ld\n", batchSize);
         printf("sleepSeconds is %ld\n", sleepSeconds);
         printf("verbosity is %ld\n", verbosity);
@@ -163,7 +204,7 @@ int processOptions(int argc, char *argv[]) {
                 rc = 1;
             }
         } else {
-            fprintf(stderr, "Usage: rdqmget [-b batches] [-m messages] [-s sleep] [-v verbosity] QMgrName QName\n");
+            fprintf(stderr, "Usage: rdqmget [-b batches] [-l message length] [-m messages] [-p password] [-s sleep] [-u userid] [-v verbosity] QMgrName QName\n");
             rc = 1;
         }
     }

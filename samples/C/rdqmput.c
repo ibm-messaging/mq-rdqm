@@ -29,7 +29,7 @@
 #include "log.h"
 #include "options.h"
 
-char buffer[30];
+void *messageBuffer;
 
 MQLONG CompCode;
 MQLONG Reason;
@@ -61,12 +61,12 @@ int putMessage(int batchNumber, int messageNumber) {
                          MQPMO_NEW_CORREL_ID |
                          MQPMO_FAIL_IF_QUIESCING;
 
-    snprintf(buffer,
-             29,
+    snprintf(messageBuffer,
+             messageSize - 1,
              "Batch %d, Message %d",
              batchNumber,
              messageNumber);
-    buffer[29] = '\0';
+    ((char *)(messageBuffer))[messageSize - 1] = '\0';
 
     MsgDesc.Persistence = MQPER_PERSISTENT;
 
@@ -77,15 +77,15 @@ int putMessage(int batchNumber, int messageNumber) {
     }
 
     if (verbosity > 2) {
-        printf("Message is \"%s\"\n", buffer);
+        printf("Message is \"%s\"\n", messageBuffer);
     }
 
     MQPUT(Hconn,
           Hobj,
           &MsgDesc,
           &PutMsgOpts,
-          30,
-          buffer,
+          messageSize,
+          messageBuffer,
           &CompCode,
           &Reason);
     if (CompCode == MQCC_OK) {

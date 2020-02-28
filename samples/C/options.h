@@ -26,5 +26,6 @@ extern char UserId[13];
 extern size_t UserIdLen;
 extern char Password[MQ_CSP_PASSWORD_LENGTH + 1];
 extern size_t PasswordLen;
+extern size_t messageSize;
 
 extern int processOptions(int argc, char *argv[]);
