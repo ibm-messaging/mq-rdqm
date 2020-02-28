@@ -22,6 +22,7 @@ where:
 &lt;sample&gt; is either rdqmget or rdqmput and [options] is zero or more of:
 <pre>
 -b &lt;number of batches&gt;
+-l &lt;message size&gt;
 -m &lt;batch size&gt;
 -p &lt;password&gt;
 -s &lt;sleep time between messages&gt;
@@ -30,6 +31,8 @@ where:
 </pre>
 
 The default number of batches is 20 and the default batch size is 10 so by default rdqmput will put a total of 200 messages and rdqmget will get a total of 200 messages.
+
+The default message size is 2048 bytes. If you specify a size with rdqmget that is smaller than the size used with rdqmput then truncated messages will be retrieved and if you show the message content you will see that it is truncated.
 
 By using a specified number of messages you can check that the right number of messages was processed:
 * if you run just the putter then you can tell that the queue is of the correct depth at the end of a test; for example if the CURDEPTH of the queue is 0 before you run a test and you just run rdqmput with the defaults, the CURDEPTH of the queue should be 200 when rdqmput completes, even if the queue manager has failed over during the test.
