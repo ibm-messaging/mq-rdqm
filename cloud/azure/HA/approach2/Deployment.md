@@ -53,8 +53,8 @@ On each node:
 
 <pre>
 sudo su - mqm
-ssh &lt;remote node 1 RDQM IP address &gt;
-ssh &lt;remote node 1 RDQM IP address &gt;
+ssh &lt;remote node 1 RDQM IP address &gt; uname -n
+ssh &lt;remote node 1 RDQM IP address &gt; uname -n
 exit
 </pre>
 

@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "<insert desired location here>"
+        },
+        "namePrefix": {
+            "value": "<insert a unique naming prefix here>"
+        },
+        "resourceTags": {
+            "value": {
+                "owner": "<insert your email address here>"
+            }
+        },
+        "vm_size": {
+            "value": "<insert the size of VM you want here>"
+        },
+        "image_id": {
+            "value": "<insert the id of your RDQM image here>"
+        },
+        "ssh_public_key": {
+            "value": "<insert your ssh public key here>"
+        },
+        "vnet_cidr": {
+            "value": "<insert your vlan address block here>"
+        },
+        "public_cidr": {
+            "value": "<insert your public address block here>"
+        }
+    }
+}
