@@ -77,7 +77,7 @@ int putMessage(int batchNumber, int messageNumber) {
     }
 
     if (verbosity > 2) {
-        printf("Message is \"%s\"\n", messageBuffer);
+        printf("Message is \"%s\"\n", (char *)messageBuffer);
     }
 
     MQPUT(Hconn,
@@ -225,6 +225,7 @@ int main(int argc, char *argv[]) {
             close_and_disconnect();
         }
     } else {
+        fprintf(stderr, "Usage: rdqmput [-b batches] [-l message length] [-m messages] [-s sleep] -u userid [-v verbosity] QMgrName QName\n");
         exitCode = 1;
     }
 

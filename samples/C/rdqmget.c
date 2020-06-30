@@ -84,14 +84,14 @@ int getMessage(int batchNumber, int messageNumber) {
             printf("Message %d got successfully\n", messageNumber);
         }
         if (verbosity > 2) {
-            printf("Message is \"%s\"\n", messageBuffer);
+            printf("Message is \"%s\"\n", (char *)messageBuffer);
         }
     } else if (CompCode == MQCC_WARNING) {
         if (Reason == MQRC_TRUNCATED_MSG_ACCEPTED) {
             if (verbosity > 2) {
                 // Terminate buffer as original message was longer
                 ((char *)(messageBuffer))[messageSize - 1] = '\0';
-                printf("Truncated Message is \"%s\"\n", messageBuffer);
+                printf("Truncated Message is \"%s\"\n", (char *)messageBuffer);
             }
         } else {
             // Just give up and log the error
@@ -230,6 +230,7 @@ int main(int argc, char *argv[]) {
             close_and_disconnect();
         }
     } else {
+        fprintf(stderr, "Usage: rdqmget [-b batches] [-l message length] [-m messages] [-s sleep] -u userid [-v verbosity] QMgrName QName\n");
         exitCode = 1;
     }
 

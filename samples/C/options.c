@@ -106,7 +106,7 @@ int processOptions(int argc, char *argv[]) {
     
     opterr = 0;
     
-    while (((opt = getopt(argc, argv, "b:l:m:p:s:u:v:")) != -1) && (rc == 0)) {
+    while (((opt = getopt(argc, argv, "b:l:m:s:u:v:")) != -1) && (rc == 0)) {
         switch (opt) {
             case 'b':
                 rc = longValueOfOption("numberOfBatches",
@@ -120,15 +120,6 @@ int processOptions(int argc, char *argv[]) {
                 break;
             case 'm':
                 rc = longValueOfOption("batchSize", optarg, &batchSize);
-                break;
-            case 'p':
-                PasswordLen = strlen(optarg);
-                if (PasswordLen < (MQ_CSP_PASSWORD_LENGTH + 1)) {
-                    strncpy(Password, optarg, PasswordLen);
-                } else {
-                    fprintf(stderr, "Password too long\n");
-                    rc = 1;
-                }
                 break;
             case 's':
                 rc = longValueOfOption("sleepSeconds", optarg, &sleepSeconds);
@@ -146,36 +137,40 @@ int processOptions(int argc, char *argv[]) {
                 rc = longValueOfOption("verbosity", optarg, &verbosity);
                 break;
             default:
-                fprintf(stderr, "Usage: rdqmget [-b batches] [-l message length] [-m messages] [-p password] [-s sleep] [-u userid] [-v verbosity] QMgrName QName\n");
                 rc = 1;
         }
     }
     
-    if (messageSize) {
-        messageBuffer = malloc(messageSize);
-    }
+    if (rc == 0) {
+        if (messageSize) {
+            messageBuffer = malloc(messageSize);
+        }
 
-    if ((UserIdLen > 0) && !(PasswordLen > 0)) {
-        password = getpass("password:");
-        if (password != NULL) {
-            password_length = strlen(password);
-            if (password_length < (MQ_CSP_PASSWORD_LENGTH + 1)) {
-                strncpy(Password, password, password_length);
-                PasswordLen = password_length;
+        if ((UserIdLen > 0) && !(PasswordLen > 0)) {
+            // If password not specified, try environment variable rather than prompting.
+            password = getenv("RDQM_PASSWORD");
+            if (password != NULL) {
+                password_length = strlen(password);
+                if (password_length < (MQ_CSP_PASSWORD_LENGTH + 1)) {
+                    strncpy(Password, password, password_length);
+                    PasswordLen = password_length;
+                } else {
+                    fprintf(stderr, "Password too long\n");
+                    rc = 1;
+                }
             }
         }
     }
-    
-    if (verbosity > 2) {
-        printf("numberOfBatches is %ld\n", numberOfBatches);
-        printf("messageSize is %ld\n", messageSize);
-        printf("batchSize is %ld\n", batchSize);
-        printf("sleepSeconds is %ld\n", sleepSeconds);
-        printf("verbosity is %ld\n", verbosity);
 
-    }
-    
     if (rc == 0) {
+        if (verbosity > 2) {
+            printf("numberOfBatches is %ld\n", numberOfBatches);
+            printf("messageSize is %ld\n", messageSize);
+            printf("batchSize is %ld\n", batchSize);
+            printf("sleepSeconds is %ld\n", sleepSeconds);
+            printf("verbosity is %ld\n", verbosity);
+        }
+    
         if ((argc - optind) == 2) {
             QMgrNameLen = strlen(argv[optind]);
             if (QMgrNameLen <= 48) {
@@ -204,10 +199,9 @@ int processOptions(int argc, char *argv[]) {
                 rc = 1;
             }
         } else {
-            fprintf(stderr, "Usage: rdqmget [-b batches] [-l message length] [-m messages] [-p password] [-s sleep] [-u userid] [-v verbosity] QMgrName QName\n");
             rc = 1;
         }
     }
-    
+
     return rc;
 }

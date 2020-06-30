@@ -1,4 +1,4 @@
-MQDIR=/opt/mqm
+MQDIR=/home/rdqmuser
 INCDIR=$(MQDIR)/inc
 LIBDIR=$(MQDIR)/lib64
 CC=gcc
