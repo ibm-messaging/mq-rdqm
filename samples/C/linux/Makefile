@@ -1,4 +1,4 @@
-MQDIR=/MQ
+MQDIR=/IBM/MQ
 INCDIR=$(MQDIR)/inc
 LIBDIR=$(MQDIR)/lib64
 CC=gcc
