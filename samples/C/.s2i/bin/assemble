@@ -15,7 +15,8 @@
 # limitations under the License.
 
 id
-cd
-cd src/linux
+pwd
+ls
+cd /MQ/s2i/src/linux
 ls
 make 
