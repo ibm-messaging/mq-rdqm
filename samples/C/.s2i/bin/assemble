@@ -14,9 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-id
-pwd
-ls
-cd /MQ/s2i/src/linux
-ls
+echo "Contents of /MQ are:"
+cd /MQ
+ls -l
+echo "Contents of /MQ/s2i are:"
+cd s2i
+ls -l
+echo "Contents of /MQ/s2i/src are:"
+cd src
+ls -l
+echo "Contents of /MQ/s2i/src/linux are:"
+cd linux
+ls -l
 make 
