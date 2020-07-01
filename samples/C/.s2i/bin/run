@@ -78,12 +78,12 @@ fi
 
 case "$RDQM_EXECUTABLE" in
     rdqmget)
-        echo "/MQ/s2i/src/linux/rdqmget $options $RDQM_QMGRNAME $RDQM_QNAME"
-        exec /MQ/s2i/src/linux/rdqmget $options $RDQM_QMGRNAME $RDQM_QNAME
+        echo "/IBM/MQ/s2i/src/linux/rdqmget $options $RDQM_QMGRNAME $RDQM_QNAME"
+        exec /IBM/MQ/s2i/src/linux/rdqmget $options $RDQM_QMGRNAME $RDQM_QNAME
     ;;
     rdqmput)
-        echo "/MQ/s2i/src/linux/rdqmput $options $RDQM_QMGRNAME $RDQM_QNAME"
-        exec /MQ/s2i/src/linux/rdqmput $options $RDQM_QMGRNAME $RDQM_QNAME
+        echo "/IBM/MQ/s2i/src/linux/rdqmput $options $RDQM_QMGRNAME $RDQM_QNAME"
+        exec /IBM/MQ/s2i/src/linux/rdqmput $options $RDQM_QMGRNAME $RDQM_QNAME
     ;;
     *)
         exit 1
