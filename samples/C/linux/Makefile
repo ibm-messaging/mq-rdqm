@@ -7,6 +7,9 @@ LDFLAGS=-L $(LIBDIR) -l mqic_r -Wl,-rpath=$(LIBDIR) -Wl,-rpath=/usr/lib64
 
 all : rdqmget rdqmput
 
+pause.o : ../pause.c
+	$(CC) $(CCFLAGS) -c ../pause.c
+
 complete.o : ../complete.c
 	$(CC) $(CCFLAGS) -c ../complete.c
 
@@ -22,10 +25,10 @@ log.o : ../log.c
 options.o : ../options.c
 	$(CC) $(CCFLAGS) -c ../options.c
 
-rdqmget : ../rdqmget.c complete.o connection.o globals.o log.o options.o
+rdqmget : ../rdqmget.c complete.o connection.o globals.o log.o options.o pause.o
 	$(CC) $(CCFLAGS) -o rdqmget ../rdqmget.c complete.o connection.o globals.o log.o options.o $(LDFLAGS)
 
-rdqmput : ../rdqmput.c complete.o connection.o globals.o log.o options.o
+rdqmput : ../rdqmput.c complete.o connection.o globals.o log.o options.o pause.o
 	$(CC) $(CCFLAGS) -o rdqmput ../rdqmput.c complete.o connection.o globals.o log.o options.o $(LDFLAGS)
 
 clean:
