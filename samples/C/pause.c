@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
+#include <stdlib.h>
 #include <unistd.h>
 
 void pause_sample() {
-    pause();
+    char *pause_value = getenv("RDQM_PAUSE);
+
+    if (pause_value != NULL) {
+        pause();
+    }
 
     return;
 }
