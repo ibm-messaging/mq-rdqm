@@ -28,6 +28,7 @@
 #include "globals.h"
 #include "log.h"
 #include "options.h"
+#include "pause.h"
 
 void *messageBuffer;
 
@@ -233,6 +234,8 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: rdqmget [-b batches] [-l message length] [-m messages] [-s sleep] -u userid [-v verbosity] QMgrName QName\n");
         exitCode = 1;
     }
+
+    pause_sample();
 
     exit(exitCode);
 }
