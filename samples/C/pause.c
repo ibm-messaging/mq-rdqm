@@ -18,7 +18,7 @@
 #include <unistd.h>
 
 void pause_sample() {
-    char *pause_value = getenv("RDQM_PAUSE);
+    char *pause_value = getenv("RDQM_PAUSE");
 
     if (pause_value != NULL) {
         pause();
