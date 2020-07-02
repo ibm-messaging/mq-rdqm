@@ -26,10 +26,10 @@ options.o : ../options.c
 	$(CC) $(CCFLAGS) -c ../options.c
 
 rdqmget : ../rdqmget.c complete.o connection.o globals.o log.o options.o pause.o
-	$(CC) $(CCFLAGS) -o rdqmget ../rdqmget.c complete.o connection.o globals.o log.o options.o $(LDFLAGS)
+	$(CC) $(CCFLAGS) -o rdqmget ../rdqmget.c complete.o connection.o globals.o log.o options.o pause.o $(LDFLAGS)
 
 rdqmput : ../rdqmput.c complete.o connection.o globals.o log.o options.o pause.o
-	$(CC) $(CCFLAGS) -o rdqmput ../rdqmput.c complete.o connection.o globals.o log.o options.o $(LDFLAGS)
+	$(CC) $(CCFLAGS) -o rdqmput ../rdqmput.c complete.o connection.o globals.o log.o options.o pause.o $(LDFLAGS)
 
 clean:
 	rm -f *.o rdqmget rdqmput
