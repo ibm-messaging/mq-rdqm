@@ -1,0 +1,7 @@
+define ql(queue1) maxdepth(50000)
+define channel(sample.svrconn) chltype(svrconn) trptype(tcp)
+set authrec objtype(qmgr) principal('mquser') authadd(allmqi)
+set authrec profile(sample.svrconn) objtype(channel) principal('mquser') authadd(allmqi)
+set authrec profile(queue1) objtype(queue) principal('mquser') authadd(allmqi)
+refresh security(*)
+end

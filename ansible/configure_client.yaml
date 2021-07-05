@@ -1,0 +1,99 @@
+---
+- hosts: all
+  strategy: free
+
+  tasks:
+
+    - name: Install tar command
+      yum:
+        name: "{{ packages }}"
+        state: latest
+        lock_timeout: 180
+      vars:
+        packages:
+          - tar
+
+    - name: Set the timezone
+      timezone:
+        hwclock: UTC
+        name: Europe/London
+
+    - name: Copy MQ Client image
+      copy:
+              src: "{{ mq_client_image }}"
+              dest: "{{ mq_client_image }}"
+
+    - name: Create directory for MQ image
+      file:
+        path: "/var/tmp/MQ_{{ mq_release }}"
+        state: directory
+
+    - name: Unarchive the MQ Client image
+      unarchive:
+        src: "{{ mq_client_image }}"
+        dest: "/var/tmp/MQ_{{ mq_release }}"
+        remote_src: yes
+
+    - name: Create local yum repo for MQ Client
+      yum_repository:
+              name: MQ
+              description: IBM MQ 9.2.2 x86_64 Client
+              baseurl: file:///var/tmp/MQ_9.2.2/MQClient
+              gpgcheck: no
+
+    - name: Install MQ Client
+      yum:
+        name: "{{ packages }}"
+        state: latest
+        lock_timeout: 180
+      vars:
+        packages:
+          - MQSeriesClient
+          - MQSeriesSamples
+          - MQSeriesSDK
+
+    - name: Create mquser user
+      user:
+              name: mquser
+              password: "{{ mquser_password }}"
+
+    - name: Set MQ installation as the primary installation
+      command: /opt/mqm/bin/setmqinst -i -p /opt/mqm
+
+    - name: Create run_rdqmget
+      template:
+        src: run_script.j2
+        dest: /home/mquser/run_rdqmget
+        owner: mquser
+        group: mquser
+        mode: 0755
+      vars:
+        IP1: "{{ hostvars[groups['rdqm'][0]].ansible_host }}"
+        IP2: "{{ hostvars[groups['rdqm'][1]].ansible_host }}"
+        IP3: "{{ hostvars[groups['rdqm'][2]].ansible_host }}"
+        PORT: 1414
+        executable: rdqmget
+
+    - name: Create run_rdqmput
+      template:
+        src: run_script.j2
+        dest: /home/mquser/run_rdqmput
+        owner: mquser
+        group: mquser
+        mode: 0755
+      vars:
+        IP1: "{{ hostvars[groups['rdqm'][0]].ansible_host }}"
+        IP2: "{{ hostvars[groups['rdqm'][1]].ansible_host }}"
+        IP3: "{{ hostvars[groups['rdqm'][2]].ansible_host }}"
+        PORT: 1414
+        executable: rdqmput
+
+    - name: Install gcc-toolset-10
+      yum:
+        name: "{{ packages }}"
+        state: latest
+        lock_timeout: 180
+      vars:
+        packages:
+          - gcc-toolset-10
+          - git

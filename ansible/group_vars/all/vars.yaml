@@ -1,0 +1,11 @@
+mq_release: "9.2.2"
+mq_client_image: "/root/9.2.2.0-IBM-MQC-LinuxX64.tar.gz"
+mq_server_image: "/root/IBM_MQ_9.2.2_LINUX_X86-64.tar.gz"
+
+mqm_password: "$6$MNi1nZTpHk$2jzvqSv60WpdSLk7MfEtdeqGScEGy.1OsYhWGXsE27Cdi4UX/dDffZNhZd0YoYgN94XypInPOJ9Hd5Gs7FLTZ/"
+mquser_password: "$6$MNi1nZTpHk$2jzvqSv60WpdSLk7MfEtdeqGScEGy.1OsYhWGXsE27Cdi4UX/dDffZNhZd0YoYgN94XypInPOJ9Hd5Gs7FLTZ/"
+rdqmadmin_password: "$6$MNi1nZTpHk$2jzvqSv60WpdSLk7MfEtdeqGScEGy.1OsYhWGXsE27Cdi4UX/dDffZNhZd0YoYgN94XypInPOJ9Hd5Gs7FLTZ/"
+
+timezone: "Europe/London"
+
+DRBD_device: "/dev/vdb"
