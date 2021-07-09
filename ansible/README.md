@@ -54,7 +54,7 @@ The device which should be used to create a volume group for DRBD/RDQM.
 
 The file that contains the definition of the standard RHEL 8 AppStream repository.
 
-### DRBD_device
+### appstream_repo_id
 
 The ID of the standard RHEL 8 AppStream repository.
 
