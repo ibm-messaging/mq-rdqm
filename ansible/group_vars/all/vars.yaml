@@ -9,3 +9,6 @@ rdqmadmin_password: "<encrypted password>"
 timezone: "Europe/London"
 
 DRBD_device: "/dev/x"
+
+appstream_repo_file: ""
+appstream_repo_id: ""

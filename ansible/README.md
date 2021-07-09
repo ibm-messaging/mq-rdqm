@@ -50,6 +50,13 @@ The timezone desired for each of the nodes.
 
 The device which should be used to create a volume group for DRBD/RDQM.
 
+### appstream_repo_file
+
+The file that contains the definition of the standard RHEL 8 AppStream repository.
+
+### DRBD_device
+
+The ID of the standard RHEL 8 AppStream repository.
 
 ## RDQM Playbook
 

@@ -61,6 +61,12 @@
               baseurl: file:///var/tmp/MQ_9.2.2/MQServer/Advanced/RDQM
               gpgcheck: no
 
+    - name: Add exclude line to existing repository
+      lineinfile:
+        path: "{{ appstream_repo_file }}"
+        insertafter: "{{ appstream_repo_id }}"
+        line: exclude=cluster* corosync* drbd kmod-drbd libqb* pacemaker* resource-agents*
+
     - name: Install MQ Server and Pacemaker
       yum:
         name: "{{ packages }}"
