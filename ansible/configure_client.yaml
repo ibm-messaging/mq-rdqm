@@ -37,8 +37,8 @@
     - name: Create local yum repo for MQ Client
       yum_repository:
               name: MQ
-              description: IBM MQ 9.2.2 x86_64 Client
-              baseurl: file:///var/tmp/MQ_9.2.2/MQClient
+              description: "IBM MQ {{ mq_release }} x86_64 Client"
+              baseurl: "file:///var/tmp/MQ_{{ mq_release }}/MQClient"
               gpgcheck: no
 
     - name: Install MQ Client
