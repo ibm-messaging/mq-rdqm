@@ -40,9 +40,9 @@
 
     - name: Create local yum repo for MQ Server
       yum_repository:
-              name: IBM-MQ-9.2.2-x86_64
-              description: IBM MQ 9.2.2 x86_64
-              baseurl: file:///var/tmp/MQ_9.2.2/MQServer
+              name: "IBM-MQ-{{ mq_release }}-x86_64"
+              description: "IBM MQ {{ mq_release }} x86_64"
+              baseurl: "file:///var/tmp/MQ_{{ mq_release }}/MQServer"
 
     - name: Install createrepo_c
       package:
@@ -51,14 +51,14 @@
 
     - name: Create repodata for RDQM and prereqs
       command:
-              chdir: /var/tmp/MQ_9.2.2/MQServer/Advanced/RDQM
+              chdir: "/var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM"
               cmd: createrepo_c .
 
     - name: Create local yum repo for RDQM and prereqs
       yum_repository:
               name: RDQM
-              description: IBM MQ 9.2.2 x86_64 RDQM
-              baseurl: file:///var/tmp/MQ_9.2.2/MQServer/Advanced/RDQM
+              description: "IBM MQ {{ mq_release }} x86_64 RDQM"
+              baseurl: "file:///var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM"
               gpgcheck: no
 
     - name: Install MQ Server and Pacemaker
