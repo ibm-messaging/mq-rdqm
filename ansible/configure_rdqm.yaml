@@ -173,6 +173,7 @@
       authorized_key:
               user: mqm
               key: "{{ mqm_1_key.stdout }}"
+              exclusive: no
       delegate_to: "{{ ansible_play_hosts_all[1] }}"
 
     - name: Copy mqm key from node 1 to node 3
@@ -180,6 +181,7 @@
       authorized_key:
               user: mqm
               key: "{{ mqm_1_key.stdout }}"
+              exclusive: no
       delegate_to: "{{ ansible_play_hosts_all[2] }}"
 
     - name: Copy mqm key from node 2 to node 1
@@ -187,6 +189,7 @@
       authorized_key:
               user: mqm
               key: "{{ mqm_2_key.stdout }}"
+              exclusive: no
       delegate_to: "{{ ansible_play_hosts_all[0] }}"
 
     - name: Copy mqm key from node 2 to node 3
@@ -194,6 +197,7 @@
       authorized_key:
               user: mqm
               key: "{{ mqm_2_key.stdout }}"
+              exclusive: no
       delegate_to: "{{ ansible_play_hosts_all[2] }}"
 
     - name: Copy mqm key from node 3 to node 1
@@ -201,6 +205,7 @@
       authorized_key:
               user: mqm
               key: "{{ mqm_3_key.stdout }}"
+              exclusive: no
       delegate_to: "{{ ansible_play_hosts_all[0] }}"
 
     - name: Copy mqm key from node 3 to node 2
@@ -208,6 +213,7 @@
       authorized_key:
               user: mqm
               key: "{{ mqm_3_key.stdout }}"
+              exclusive: no
       delegate_to: "{{ ansible_play_hosts_all[1] }}"
 
     - name: Allow mqm to ssh from node 1 to node 2
