@@ -1,0 +1,19 @@
+  - name: Set the timezone
+    timezone:
+        hwclock: UTC
+        name: "{{ timezone }}"
+
+  - name: Set nofile limit for non-root
+    pam_limits:
+        domain: '*'
+        limit_type: '-'
+        limit_item: nofile
+        value: '10240'
+
+  - name: Set nofile limit for root
+    pam_limits:
+        domain: root
+        limit_type: '-'
+        limit_item: nofile
+        value: '10240'
+

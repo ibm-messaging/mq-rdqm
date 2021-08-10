@@ -2,16 +2,16 @@
 
 This directory contains:
 
-1. an ansible playbook `configure_rdqm.yaml` to configure three systems ready to become an RDQM HA Group
+1. an ansible playbook `rdqm.yaml` to configure three systems ready to become an RDQM HA Group
 
-2. an ansible playbook `configure_client.yaml` to configure one or more systems as MQ client systems to use an RDQM HA queue manager on the HA Group
+2. an ansible playbook `client.yaml` to configure one or more systems as MQ client systems to use an RDQM HA queue manager on the HA Group
 
 ## hosts.ini
 
 Before running either playbook, you will need to update the hosts.ini file to reflect the systems
 you wish to configure, both RDQM and client.
 
-## Variables
+## General variables
 
 The following sections describe each of the variables defined in the file `group_vars/all/vars.yaml`
 
@@ -50,6 +50,10 @@ The timezone desired for each of the nodes.
 
 The device which should be used to create a volume group for DRBD/RDQM.
 
+## el8 Variables
+
+The following variables are only used in the el8 role so they are defined in roles/rdqm-el8/vars/main.yml
+
 ### appstream_repo_file
 
 The file that contains the definition of the standard RHEL 8 AppStream repository.
@@ -62,7 +66,7 @@ The ID of the standard RHEL 8 AppStream repository.
 
 Once the `hosts.ini` file has been updated and any variables, the RDQM playbook can be run with the command:
 ```
-ansible-playbook -l rdqm configure_rdqm.yaml
+ansible-playbook -l rdqm rdqm.yml
 ```
 
 ## Configure RDQM HA Group
@@ -145,7 +149,7 @@ HA status:                              Normal
 
 Once the `hosts.ini` file has been updated and any variables, the client playbook can be run with the command:
 ```
-ansible-playbook -l client configure_client.yaml
+ansible-playbook -l client client.yml
 ```
 ## Configure client system
 
@@ -170,6 +174,7 @@ cd github.com/ibm-messaging
 git clone https://github.com/ibm-messaging/mq-rdqm.git
 cd mq-rdqm/samples/C/linux
 make
+cd
 ```
 
 The output of the make should be something like:

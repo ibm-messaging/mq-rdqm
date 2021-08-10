@@ -1,0 +1,16 @@
+    - name: Create repodata for prereqs (el7)
+      command:
+              chdir: "/var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM/PreReqs/el7"
+              cmd: createrepo_c .
+
+    - name: Create local yum repo for prereqs (el7)
+      yum_repository:
+              name: RDQM
+              description: "IBM MQ {{ mq_release }} x86_64 RDQM"
+              baseurl: "file:///var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM/PreReqs/el7"
+              gpgcheck: no
+
+    - name: Install semanage (el7)
+      package:
+              name: policycoreutils-python
+              state: present
