@@ -2,9 +2,9 @@
 
 This directory contains:
 
-1. an ansible playbook `rdqm.yaml` to configure three systems ready to become an RDQM HA Group
+1. an ansible playbook `rdqm.yml` to configure three systems ready to become an RDQM HA Group
 
-2. an ansible playbook `client.yaml` to configure one or more systems as MQ client systems to use an RDQM HA queue manager on the HA Group
+2. an ansible playbook `client.yml` to configure one or more systems as MQ client systems to use an RDQM HA queue manager on the HA Group
 
 ## hosts.ini
 
