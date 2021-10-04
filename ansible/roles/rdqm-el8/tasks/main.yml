@@ -1,10 +1,15 @@
-    - name: Create repodata for prereqs (el8)
+    - name: Install createrepo_c
+      package:
+              name: "createrepo_c.x86_64"
+              state: installed
+
+    - name: Create repodata for prereqs
       command:
               chdir: "/var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM/PreReqs/el8"
               cmd: createrepo_c .
       when: ansible_distribution_major_version == "8"
 
-    - name: Create local yum repo for prereqs (el8)
+    - name: Create local yum repo for prereqs
       yum_repository:
               name: RDQM
               description: "IBM MQ {{ mq_release }} x86_64 RDQM"
@@ -12,7 +17,7 @@
               gpgcheck: no
       when: ansible_distribution_major_version == "8"
 
-    - name: Install semanage (el8)
+    - name: Install semanage
       package:
               name: policycoreutils-python-utils
               state: present

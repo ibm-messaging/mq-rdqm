@@ -1,14 +1,9 @@
-mq_release: "9.2.2"
-mq_client_image: "/root/9.2.2.0-IBM-MQC-LinuxX64.tar.gz"
-mq_server_image: "/root/IBM_MQ_9.2.2_LINUX_X86-64.tar.gz"
+mq_release: "9.2.3"
+mq_client_image: "/root/9.2.3.0-IBM-MQC-LinuxX64.tar.gz"
+mq_server_image: "/root/IBM_MQ_9.2.3_LINUX_X86-64.tar.gz"
 
-mqm_password: "<encrypted password>"
-mquser_password: "<encrypted password>"
-rdqmadmin_password: "<encrypted password>"
+mqm_password: "<encrypted temporary password for mqm user>"
+mquser_password: "<encrypted password for mquser user>"
+rdqmadmin_password: "<encrypted password for rdqmadmin user>"
 
-timezone: "Europe/London"
-
-DRBD_device: "/dev/x"
-
-appstream_repo_file: ""
-appstream_repo_id: ""
+DRBD_device: "/dev/vdb"

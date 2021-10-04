@@ -1,0 +1,23 @@
+  - name: Check for modver script
+    stat:
+      path: "/var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM/PreReqs/el7/kmod-drbd-9/modver"
+    register: stat_result
+
+  - fail:
+      msg: "Only MQ versions that include modver are supported"
+    when: not stat_result.stat.exists
+
+  - name: Run modver
+    when: stat_result.stat.exists
+    command: "/var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM/PreReqs/el7/kmod-drbd-9/modver"
+    register: modver_output
+
+  - name: Install DRBD kernel module
+    block:
+    - debug:
+        msg: About to install the DRBD kernel module if not installed (may take a long time)
+
+    - name: Install DRBD kernel module
+      yum:
+        name: "/var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM/PreReqs/el7/kmod-drbd-9/{{ modver_output.stdout }}"
+    when: stat_result.stat.exists

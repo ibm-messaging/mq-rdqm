@@ -3,6 +3,12 @@
   strategy: free
 
   tasks:
+    - assert:
+        that:
+          - groups['client'] | length >= 1
+
+    - include_role:
+        name: client-os
 
     - name: Install tar command
       yum:
@@ -12,11 +18,6 @@
       vars:
         packages:
           - tar
-
-    - name: Set the timezone
-      timezone:
-        hwclock: UTC
-        name: Europe/London
 
     - name: Copy MQ Client image
       copy:
@@ -88,12 +89,5 @@
         PORT: 1414
         executable: rdqmput
 
-    - name: Install gcc-toolset-10
-      yum:
-        name: "{{ packages }}"
-        state: latest
-        lock_timeout: 180
-      vars:
-        packages:
-          - gcc-toolset-10
-          - git
+    - include_role:
+        name: client-el
