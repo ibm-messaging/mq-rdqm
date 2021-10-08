@@ -6,4 +6,7 @@ mqm_password: "<encrypted temporary password for mqm user>"
 mquser_password: "<encrypted password for mquser user>"
 rdqmadmin_password: "<encrypted password for rdqmadmin user>"
 
+mqm_gid: 1000
+mqm_uid: 1000
+
 DRBD_device: "/dev/vdb"

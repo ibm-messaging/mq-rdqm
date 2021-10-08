@@ -16,6 +16,21 @@
         state: absent
       delegate_to: localhost
 
+    - name: Create mqm group
+      group:
+        gid: "{{ mqm_gid }}"
+        name: mqm
+        state: present
+
+    - name: Create mqm user
+      user:
+        generate_ssh_key: yes
+        group: mqm
+        name: mqm
+        password: "{{ mqm_password }}"
+        state: present
+        uid: "{{ mqm_uid }}"
+
     - name: Copy MQ Server image
       copy:
               src: "{{ mq_server_image }}"
@@ -82,13 +97,6 @@
     - name: Configure firewall for RDQM
       command: /opt/mqm/samp/rdqm/firewalld/configure.sh
       when: firewalld_active.rc == 0
-
-    - name: Update mqm account
-      user:
-              generate_ssh_key: yes
-              home: /home/mqm
-              name: mqm
-              password: "{{ mqm_password }}"
 
     - name: Fetch mqm public key
       fetch:
