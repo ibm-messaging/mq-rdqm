@@ -22,6 +22,6 @@
 
     - name: Install RDQM
       package:
-              name: "/var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM/MQSeriesRDQM-9.2.3-0.x86_64.rpm"
+              name: "/var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM/{{ rdqm_rpm }}"
               state: present
               disable_gpg_check: true
