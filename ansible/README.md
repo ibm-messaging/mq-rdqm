@@ -8,10 +8,11 @@ This directory contains two playbooks relating to RDQM:
 
 The systems must be running either RHEL 7 or RHEL 8.
 
-You will need to update two files before using the rdqm.yml playbook to configure RHEL 7 systems:
+You will need to update three files before using the rdqm.yml playbook to configure RHEL 7 systems:
 
 1. hosts.ini
 2. group_vars/all/vars.yaml
+3. roles/rdqm-el/vars/main.yml
 
 If you are configuring RHEL 8 systems then you will need to update an additional file:
 
@@ -78,6 +79,12 @@ The user id to be used for the mqm user. The mqm user is created explicitly befo
 ### DRBD_device
 
 The device which should be used to create a volume group for DRBD/RDQM.
+
+## roles/rdqm-el/vars/main.yml
+
+### rdqm_rpm
+
+The .rpm file containing the MQ RDQM package.
 
 ## roles/rdqm-el8/vars/main.yml
 
