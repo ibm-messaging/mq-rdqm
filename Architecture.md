@@ -93,7 +93,7 @@ The third connection listed was established by node-1 to node-3.
 The fourth connection listed was established by node-3 to node-1.
 
 The easiest way to distinguish the control connection from the data connection for an active queue manager is by the amount of data flowed over the connection,
-which will be smaller for the control Connection.
+which will usually be smaller for the control Connection.
 
 To see the number of bytes flowed over each connection I use the `ss` command with the `i` option. As an example, in my current environment I ran `ss -nit '( src :7000 or dst :7000 )'` which produced:
 
