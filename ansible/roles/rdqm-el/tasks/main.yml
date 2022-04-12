@@ -1,0 +1,27 @@
+    - include_role:
+            name: rdqm-el7
+      when: ansible_distribution_major_version == "7"
+
+    - include_role:
+            name: rdqm-el8
+      when: ansible_distribution_major_version == "8"
+
+    - name: Install MQ Server and Pacemaker
+      yum:
+        name: "{{ packages }}"
+        state: latest
+        lock_timeout: 180
+      vars:
+        packages:
+          - MQSeriesRuntime
+          - MQSeriesSamples
+          - MQSeriesGSKit
+          - MQSeriesServer
+          - crmsh
+          - pacemaker
+
+    - name: Install RDQM
+      package:
+              name: "/var/tmp/MQ_{{ mq_release }}/MQServer/Advanced/RDQM/{{ rdqm_rpm }}"
+              state: present
+              disable_gpg_check: true

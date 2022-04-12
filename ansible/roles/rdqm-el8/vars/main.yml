@@ -1,0 +1,2 @@
+appstream_repo_file: "/etc/yum.repos.d/x.repo"
+appstream_repo_id: "AppStream"

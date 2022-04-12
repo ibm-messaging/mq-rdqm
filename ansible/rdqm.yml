@@ -1,0 +1,247 @@
+---
+- hosts: all
+  strategy: free
+
+  tasks:
+    - assert:
+        that:
+          - groups['rdqm'] | length == 3
+
+    - include_role:
+        name: rdqm-os
+
+    - name: Remove local directory for mqm ssh public keys
+      file:
+        path: /tmp/mqm_keys
+        state: absent
+      delegate_to: localhost
+
+    - name: Create mqm group
+      group:
+        gid: "{{ mqm_gid }}"
+        name: mqm
+        state: present
+
+    - name: Create mqm user
+      user:
+        generate_ssh_key: yes
+        group: mqm
+        name: mqm
+        password: "{{ mqm_password }}"
+        state: present
+        uid: "{{ mqm_uid }}"
+
+    - name: Copy MQ Server image
+      copy:
+              src: "{{ mq_server_image }}"
+              dest: "{{ mq_server_image }}"
+
+    - name: Create directory for MQ image
+      file:
+        path: "/var/tmp/MQ_{{ mq_release }}"
+        state: directory
+
+    - name: Unarchive the MQ Server image
+      unarchive:
+        src: "{{ mq_server_image }}"
+        dest: "/var/tmp/MQ_{{ mq_release }}"
+        remote_src: yes
+
+    - name: Create local yum repo for MQ Server
+      yum_repository:
+              name: "IBM-MQ-{{ mq_release }}-x86_64"
+              description: "IBM MQ {{ mq_release }} x86_64"
+              baseurl: "file:///var/tmp/MQ_{{ mq_release }}/MQServer"
+              gpgcheck: no
+
+    - include_role:
+        name: drbd-kmod
+
+    - include_role:
+              name: rdqm-el
+
+    - name: Set MQ installation as the primary installation
+      command: /opt/mqm/bin/setmqinst -i -p /opt/mqm
+
+    - name: Create rdqmadmin account
+      user:
+              name: rdqmadmin
+              group: mqm
+              groups: haclient
+              password: "{{ rdqmadmin_password }}"
+
+    - name: Create mquser account
+      user:
+              name: mquser
+              password: "{{ rdqmadmin_password }}"
+
+    - name: Create drbdpool volume group
+      lvg:
+              vg: drbdpool
+              pvs: "{{ DRBD_device }}"
+
+    - name: Create sudoers file for mqm
+      copy:
+              dest: /etc/sudoers.d/mqm
+              content: |
+                mqm ALL=(root) NOPASSWD: /opt/mqm/bin/crtmqm, /opt/mqm/bin/dltmqm, /opt/mqm/bin/rdqmadm, /opt/mqm/bin/rdqmstatus, /opt/mqm/bin/rdqmdr
+
+    - name: Configure SELinux for DRBD
+      command: semanage permissive -a drbd_t
+
+    - name: Check if firewalld is running
+      command: "systemctl is-active firewalld"
+      register: firewalld_active
+      failed_when: firewalld_active.rc > 3
+
+    - name: Configure firewall for RDQM
+      command: /opt/mqm/samp/rdqm/firewalld/configure.sh
+      when: firewalld_active.rc == 0
+
+    - name: Fetch mqm public key
+      fetch:
+        src: /home/mqm/.ssh/id_rsa.pub
+        dest: /tmp/mqm_keys
+
+    - name: Wait for mqm key 1
+      wait_for:
+        path: "/tmp/mqm_keys/{{ hostvars[ansible_play_hosts_all[0]].inventory_hostname }}/home/mqm/.ssh/id_rsa.pub"
+      delegate_to: localhost
+      
+    - name: Wait for mqm key 2
+      wait_for:
+        path: "/tmp/mqm_keys/{{ hostvars[ansible_play_hosts_all[1]].inventory_hostname }}/home/mqm/.ssh/id_rsa.pub"
+      delegate_to: localhost
+      
+    - name: Wait for mqm key 3
+      wait_for:
+        path: "/tmp/mqm_keys/{{ hostvars[ansible_play_hosts_all[2]].inventory_hostname }}/home/mqm/.ssh/id_rsa.pub"
+      delegate_to: localhost
+            
+    - name: Register mqm_1_key
+      set_fact:
+        mqm_1_key: "{{ lookup('file', '/tmp/mqm_keys/' + hostvars[ansible_play_hosts_all[0]].inventory_hostname + '/home/mqm/.ssh/id_rsa.pub') }}"
+      
+    - name: Register mqm_2_key
+      set_fact:
+        mqm_2_key: "{{ lookup('file', '/tmp/mqm_keys/' + hostvars[ansible_play_hosts_all[1]].inventory_hostname + '/home/mqm/.ssh/id_rsa.pub') }}"
+
+    - name: Register mqm_3_key
+      set_fact:
+        mqm_3_key: "{{ lookup('file', '/tmp/mqm_keys/' + hostvars[ansible_play_hosts_all[2]].inventory_hostname + '/home/mqm/.ssh/id_rsa.pub') }}"
+
+    - name: Get ssh key for node 1
+      shell: "ssh-keyscan -t ecdsa {{ hostvars[ansible_play_hosts_all[0]].rdqm_ha_replication }}"
+      register: node_1_key
+
+    - name: Get ssh key for node 2
+      shell: "ssh-keyscan -t ecdsa {{ hostvars[ansible_play_hosts_all[1]].rdqm_ha_replication }}"
+      register: node_2_key
+
+    - name: Get ssh key for node 3
+      shell: "ssh-keyscan -t ecdsa {{ hostvars[ansible_play_hosts_all[2]].rdqm_ha_replication }}"
+      register: node_3_key
+
+    - name: Set mqm authorized_keys on node 1
+      when: inventory_hostname == ansible_play_hosts_all[0]
+      authorized_key:
+              user: mqm
+              key: "{{ mqm_2_key}}\n{{ mqm_3_key}}"
+              exclusive: yes
+
+    - name: Set mqm authorized_keys on node 2
+      when: inventory_hostname == ansible_play_hosts_all[1]
+      authorized_key:
+              user: mqm
+              key: "{{ mqm_1_key}}\n{{ mqm_3_key}}"
+              exclusive: yes
+
+    - name: Set mqm authorized_keys on node 3
+      when: inventory_hostname == ansible_play_hosts_all[2]
+      authorized_key:
+              user: mqm
+              key: "{{ mqm_1_key}}\n{{ mqm_2_key}}"
+              exclusive: yes
+
+    - name: Allow mqm to ssh from node 1 to node 2
+      when: inventory_hostname == ansible_play_hosts_all[0]
+      become: yes
+      become_user: mqm
+      delegate_to: "{{ ansible_play_hosts_all[0] }}"
+      known_hosts:
+        name: "{{ hostvars[ansible_play_hosts_all[1]].rdqm_ha_replication }}"
+        key: "{{ node_2_key.stdout }}"
+
+    - name: Allow mqm to ssh from node 1 to node 3
+      when: inventory_hostname == ansible_play_hosts_all[0]
+      become: yes
+      become_user: mqm
+      delegate_to: "{{ ansible_play_hosts_all[0] }}"
+      known_hosts:
+        name: "{{ hostvars[ansible_play_hosts_all[2]].rdqm_ha_replication }}"
+        key: "{{ node_3_key.stdout }}"
+
+    - name: Allow mqm to ssh from node 2 to node 1
+      when: inventory_hostname == ansible_play_hosts_all[1]
+      become: yes
+      become_user: mqm
+      delegate_to: "{{ ansible_play_hosts_all[1] }}"
+      known_hosts:
+        name: "{{ hostvars[ansible_play_hosts_all[0]].rdqm_ha_replication }}"
+        key: "{{ node_1_key.stdout }}"
+
+    - name: Allow mqm to ssh from node 2 to node 3
+      when: inventory_hostname == ansible_play_hosts_all[1]
+      become: yes
+      become_user: mqm
+      delegate_to: "{{ ansible_play_hosts_all[1] }}"
+      known_hosts:
+        name: "{{ hostvars[ansible_play_hosts_all[2]].rdqm_ha_replication }}"
+        key: "{{ node_3_key.stdout }}"
+
+    - name: Allow mqm to ssh from node 3 to node 1
+      when: inventory_hostname == ansible_play_hosts_all[2]
+      become: yes
+      become_user: mqm
+      delegate_to: "{{ ansible_play_hosts_all[2] }}"
+      known_hosts:
+        name: "{{ hostvars[ansible_play_hosts_all[0]].rdqm_ha_replication }}"
+        key: "{{ node_1_key.stdout }}"
+
+    - name: Allow mqm to ssh from node 3 to node 2
+      when: inventory_hostname == ansible_play_hosts_all[2]
+      become: yes
+      become_user: mqm
+      delegate_to: "{{ ansible_play_hosts_all[2] }}"
+      known_hosts:
+        name: "{{ hostvars[ansible_play_hosts_all[1]].rdqm_ha_replication }}"
+        key: "{{ node_2_key.stdout }}"
+
+    - name: Delete password for mqm
+      command: passwd -d mqm
+
+    - name: Lock password for mqm
+      command: passwd -l mqm
+
+    - name: Update rdqm.ini on node 1
+      when: inventory_hostname == ansible_play_hosts_all[0]
+      become: yes
+      become_user: mqm
+      template:
+        src=rdqm.ini.j2
+        dest=/var/mqm/rdqm.ini
+      vars:
+        IP1: "{{ hostvars[ansible_play_hosts_all[0]].rdqm_ha_replication }}"
+        IP2: "{{ hostvars[ansible_play_hosts_all[1]].rdqm_ha_replication }}"
+        IP3: "{{ hostvars[ansible_play_hosts_all[2]].rdqm_ha_replication }}"
+        Name1: "{{ hostvars[ansible_play_hosts_all[0]].inventory_hostname }}"
+        Name2: "{{ hostvars[ansible_play_hosts_all[1]].inventory_hostname }}"
+        Name3: "{{ hostvars[ansible_play_hosts_all[2]].inventory_hostname }}"
+
+
+    - name: Create queue manager configuration script
+      when: inventory_hostname == ansible_play_hosts_all[0]
+      template:
+              src: mqsc.j2
+              dest: /home/rdqmadmin/config.mqsc
+              owner: rdqmadmin

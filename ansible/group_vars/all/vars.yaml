@@ -1,0 +1,12 @@
+mq_release: "9.2.3"
+mq_client_image: "/root/9.2.3.0-IBM-MQC-LinuxX64.tar.gz"
+mq_server_image: "/root/IBM_MQ_9.2.3_LINUX_X86-64.tar.gz"
+
+mqm_password: "<encrypted temporary password for mqm user>"
+mquser_password: "<encrypted password for mquser user>"
+rdqmadmin_password: "<encrypted password for rdqmadmin user>"
+
+mqm_gid: 1000
+mqm_uid: 1000
+
+DRBD_device: "/dev/vdb"

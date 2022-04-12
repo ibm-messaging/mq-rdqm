@@ -1,0 +1,9 @@
+#!/bin/bash
+
+IP1={{ IP1 }}
+IP2={{ IP2 }}
+IP3={{ IP3 }}
+PORT={{ PORT }}
+
+export MQSERVER=SAMPLE.SVRCONN/TCP/${IP1}\(${PORT}\),${IP2}\(${PORT}\),${IP3}\(${PORT}\)
+github.com/ibm-messaging/mq-rdqm/samples/C/linux/{{ executable }} $*

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+IP1=
+IP2=
+IP3=
+PORT=
+
+export MQSERVER=RDQM.SVRCONN/TCP/${IP1}\(${PORT}\),${IP2}\(${PORT}\),${IP3}\(${PORT}\)
+./rdqmget $*

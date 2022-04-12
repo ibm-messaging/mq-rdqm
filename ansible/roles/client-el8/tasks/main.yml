@@ -1,0 +1,9 @@
+    - name: Install gcc-toolset-10
+      yum:
+        name: "{{ packages }}"
+        state: latest
+        lock_timeout: 180
+      vars:
+        packages:
+          - gcc-toolset-10
+          - git
