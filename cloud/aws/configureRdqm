@@ -28,10 +28,13 @@ initialize_drbdpool () {
 
 cat << EOF > /var/mqm/rdqm.ini
 Node:
+    Name=InstanceA
     HA_Replication=$1
 Node:
+    Name=InstanceB
     HA_Replication=$2
 Node:
+    Name=InstanceC
     HA_Replication=$3
 EOF
 
@@ -50,4 +53,6 @@ done
 
 # Step 3 - recreate RDQM secondaries on this node
 # You need to know the name and filesystem size of each RDQM
-# /opt/mqm/bin/crtmqm -fs 3072M -sxs HAQM1
+/opt/mqm/bin/crtmqm -fs 3072M -sxs RDQM1
+/opt/mqm/bin/crtmqm -fs 3072M -sxs RDQM2
+/opt/mqm/bin/crtmqm -fs 3072M -sxs RDQM3
