@@ -159,8 +159,9 @@ usermod -a -G haclient,mqm ec2-user
 
 I then added the following line to /home/ec2-user/.bash_profile:
 
-```. /opt/mqm/bin/setmqenv -s
-   set -o vi
+```
+. /opt/mqm/bin/setmqenv -s
+set -o vi
 ```
 
 I logged out completely and logged back in again as ec2-user.
@@ -214,6 +215,8 @@ Check the AMI image status, and note down the AMI ID. This ami-id will be popula
 When you deploy the template you will be prompted for a lot of information, including the AMI to use where you should specify the ID of the AMI you created.
 
 I suggest you update the defaults (already updated above) in your copy of the template to avoid having to enter the same information each time you try deploying the template.
+
+Deploy the modifi ed template (rdqm.template.yaml). Navigte to AWS Console > Cloudformation > Create Stack > With newResources (standard) > Upload a template file > browse to rdqm.template.yaml.
 
 Populate the keypair, ami-id that captured above.
 
