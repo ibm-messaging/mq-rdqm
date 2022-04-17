@@ -360,7 +360,5 @@ You can also use rfhutilc, mqexplorer, or msgmanager tools to verify connections
 
 Download msgmanger from [here](https://community.ibm.com/community/user/integration/viewdocument/mq-message-manager-update?CommunityKey=d974a63b-37b1-4759-8c62-a9d4a6f71297).
 
-msgmanager
-![](images/msgmanager-1.png)
 
 Congratulations, you have successfully deployed IBM MQ RDQM HA Active/Active/Active topology in AWS!
