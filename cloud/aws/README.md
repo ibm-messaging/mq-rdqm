@@ -149,10 +149,11 @@ cd MQServer
 ./mqlicense.sh -accept
 -- Identify the right kmod version: Output will be like: kmod-drbd-9.1.5_4.18.0_305-1.x86_64.rpm
 Advanced/RDQM/PreReqs/el8/kmod*/modver
+# Note: if you get "Unsupported kernel release" then download correct kmod package based on  your RHEL OS version. Refer to [link](https://www.ibm.com/support/pages/ibm-mq-replicated-data-queue-manager-kernel-modules) for supported RHEL kernel modules
 -- Install kmod package
 yum install Advanced/RDQM/PreReqs/el8/<output of modver command>
 -- Install drbd package
-yum install Advanced/RDQM/PreReqs/el8/drbd-utils-9/*yum install Advanced/RDQM/PreReqs/el8/pacemaker-2/*yum install MQSeriesGSKit* MQSeriesServer*MQSeriesRuntime* MQSeriesSamples* MQSeriesClient*yum install Advanced/RDQM/MQSeriesRDQM*/opt/mqm/bin/setmqinst -i -p /opt/mqm
+yum install Advanced/RDQM/PreReqs/el8/drbd-utils-9/*yum install Advanced/RDQM/PreReqs/el8/pacemaker-2/*yum install MQSeriesGSKit* MQSeriesServer* MQSeriesRuntime* MQSeriesSamples* MQSeriesClient*yum install Advanced/RDQM/MQSeriesRDQM*/opt/mqm/bin/setmqinst -i -p /opt/mqm
 
 usermod -a -G haclient,mqm ec2-user
 ```
@@ -173,17 +174,18 @@ I ran `dspmqver` which produced:
 ```
 Name:        IBM MQ
 Version:     9.2.0.0
-Level:       p904-L171031.TRIAL
+Level:       p920-L200710.TRIAL
 BuildType:   IKAP - (Production)
 Platform:    IBM MQ for Linux (x86-64 platform)
 Mode:        64-bit
-O/S:         Linux 3.10.0-693.el7.x86_64
+O/S:         Linux 4.18.0-305.el8.x86_64
+O/S Details: Red Hat Enterprise Linux 8.4 (Ootpa)
 InstName:    Installation1
-InstDesc:    
+InstDesc:
 Primary:     Yes
 InstPath:    /opt/mqm
 DataPath:    /var/mqm
-MaxCmdLevel: 904
+MaxCmdLevel: 920
 LicenseType: Trial
 ```
 
@@ -198,6 +200,24 @@ mqm ALL=(root) NOPASSWD: /opt/mqm/bin/crtmqm, /opt/mqm/bin/dltmqm, /opt/mqm/bin/
 ### Configuring SELinux for DRBD
 
 If you plan to run SELInux in your instances you need to run `semanage permissive -a drbd_t` as root.
+```
+yum install -y policycoreutils-python-utils
+semanage permissive -a drbd_t
+```
+OR you can update global setting like below,
+```
+# update selinux confi g fi levi /etc/selinux/confi gSELINUX=permissive
+```
+
+### Move configureRdqm, setupRdqmInstance scripts to /root/bin
+```
+sudo -s
+mkdir /root/bin
+mv configureRdqm /root/bin
+mv setupRdqmInstance /root/bin
+chown -R root:root /root/bin
+chmod -R +x /root/bin
+```
 
 
 ## Creating the Amazon Machine Image (AMI)
