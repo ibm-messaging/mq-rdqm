@@ -107,8 +107,8 @@ Move the scripts to /root/bin
 sudo -s
 chmod +x setupRdqmInstance configureRdqm
 chown root:root setupRdqmInstance configureRdqm
+mkdir /root/bin
 mv setupRdqmInstance configureRdqm /root/bin
-exit
 ```
 
 ### Linux Kernel Configuration
@@ -120,10 +120,12 @@ There is also one additional package that needs to be installed before installin
 I ran the following:
 ```
 sudo -s
-yum install bc
+yum install -y bc
 echo 'kernel.shmmax=268435456' >> /etc/sysctl.conf
 echo 'vm.overcommit_memory=2' >> /etc/sysctl.conf
 sysctl -p
+echo 'fs.file-max=524288' >> /etc/sysctl.conf
+echo 32768 > /proc/sys/kernel/threads-max
 echo '* hard nofile 10240' >> /etc/security/limits.conf
 echo '* soft nofile 10240' >> /etc/security/limits.conf
 echo 'root hard nofile 10240' >> /etc/security/limits.conf
@@ -149,11 +151,14 @@ cd MQServer
 ./mqlicense.sh -accept
 -- Identify the right kmod version: Output will be like: kmod-drbd-9.1.5_4.18.0_305-1.x86_64.rpm
 Advanced/RDQM/PreReqs/el8/kmod*/modver
-# Note: if you get "Unsupported kernel release" then download correct kmod package based on  your RHEL OS version. Refer to [link](https://www.ibm.com/support/pages/ibm-mq-replicated-data-queue-manager-kernel-modules) for supported RHEL kernel modules
+-- Note: if you get "Unsupported kernel release" then download correct kmod package based on  your RHEL OS version. Refer to [link](https://www.ibm.com/support/pages/ibm-mq-replicated-data-queue-manager-kernel-modules) for supported RHEL kernel modules
 -- Install kmod package
-yum install Advanced/RDQM/PreReqs/el8/<output of modver command>
+yum install -y Advanced/RDQM/PreReqs/el8/<output of modver command>
 -- Install drbd package
-yum install Advanced/RDQM/PreReqs/el8/drbd-utils-9/*yum install Advanced/RDQM/PreReqs/el8/pacemaker-2/*yum install MQSeriesGSKit* MQSeriesServer* MQSeriesRuntime* MQSeriesSamples* MQSeriesClient*yum install Advanced/RDQM/MQSeriesRDQM*/opt/mqm/bin/setmqinst -i -p /opt/mqm
+yum install -y Advanced/RDQM/PreReqs/el8/drbd-utils-9/*yum install -y Advanced/RDQM/PreReqs/el8/pacemaker-2/*yum install -y MQSeriesGSKit* MQSeriesServer* MQSeriesRuntime* MQSeriesSamples* MQSeriesClient*yum install -y Advanced/RDQM/MQSeriesRDQM*yum install -y unzip
+cd /opt/mqm/bin 
+./mqlicense -accept
+/opt/mqm/bin/setmqinst -i -p /opt/mqm
 
 usermod -a -G haclient,mqm ec2-user
 ```
@@ -207,16 +212,6 @@ semanage permissive -a drbd_t
 OR you can update global setting like below,
 ```
 # update selinux confi g fi levi /etc/selinux/confi gSELINUX=permissive
-```
-
-### Move configureRdqm, setupRdqmInstance scripts to /root/bin
-```
-sudo -s
-mkdir /root/bin
-mv configureRdqm /root/bin
-mv setupRdqmInstance /root/bin
-chown -R root:root /root/bin
-chmod -R +x /root/bin
 ```
 
 
