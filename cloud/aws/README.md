@@ -342,7 +342,9 @@ The sample client programs passes your login userid through MQCSP structure to t
 
 Create userid in RDQM vm1, vm2, vm3.
 ```
-adduser -a -G mqm johnc
+sudo -s
+adduser johnc
+usermod -a -G mqm sbodapati
 ```
 
 I will use the PublicListenerLoadBalancer DNS address to test from my computer. You can use also the PrivateListenerLoadBalancer to test from the Bastion Server.
