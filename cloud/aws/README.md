@@ -130,6 +130,7 @@ echo '* hard nofile 10240' >> /etc/security/limits.conf
 echo '* soft nofile 10240' >> /etc/security/limits.conf
 echo 'root hard nofile 10240' >> /etc/security/limits.conf
 echo 'root soft nofile 10240' >> /etc/security/limits.conf
+sysctl -p
 ```
 
 ### Initialize secondary storage, create drbdpool volume group 
