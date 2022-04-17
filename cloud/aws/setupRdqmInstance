@@ -36,7 +36,7 @@
 configureNetworkForA () {
     cat << 'EOF' > /etc/sysconfig/network-scripts/ifcfg-eth1
 BOOTPROTO=none
-IPADDR=10.0.128.25
+IPADDR=10.0.192.25
 ONBOOT=yes
 DEVICE=eth1
 PREFIX=20
@@ -46,20 +46,21 @@ EOF
     # dedicated RDQM Network Interfaces
     #
     cat << 'EOF' > /etc/sysconfig/network-scripts/route-eth1
-10.0.144.25 via 10.0.128.1 dev eth1
-10.0.160.25 via 10.0.128.1 dev eth1
+10.0.200.25 via 10.0.192.1 dev eth1
+10.0.208.25 via 10.0.192.1 dev eth1
 EOF
     # Set a fixed hostname so that the DRBD configuration files are still ok
     hostnamectl --static set-hostname InstanceA
     # Now restart the network for the changes to take effect
-    systemctl restart network
+    #systemctl restart network
+    nmcli networking off && nmcli networking on
 }
 
 # Configure the network for Availability Zone B
 configureNetworkForB () {
     cat << 'EOF' > /etc/sysconfig/network-scripts/ifcfg-eth1
 BOOTPROTO=none
-IPADDR=10.0.144.25
+IPADDR=10.0.200.25
 ONBOOT=yes
 DEVICE=eth1
 PREFIX=20
@@ -69,20 +70,21 @@ EOF
     # dedicated RDQM Network Interfaces
     #
     cat << 'EOF' > /etc/sysconfig/network-scripts/route-eth1
-10.0.128.25 via 10.0.144.1 dev eth1
-10.0.160.25 via 10.0.144.1 dev eth1
+10.0.192.25 via 10.0.200.1 dev eth1
+10.0.208.25 via 10.0.200.1 dev eth1
 EOF
     # Set a fixed hostname so that the DRBD configuration files are still ok
     hostnamectl --static set-hostname InstanceB
     # Now restart the network for the changes to take effect
-    systemctl restart network
+    #systemctl restart network
+    nmcli networking off && nmcli networking on
 }
 
 # Configure the network for Availability Zone C
 configureNetworkForC () {
     cat << 'EOF' > /etc/sysconfig/network-scripts/ifcfg-eth1
 BOOTPROTO=none
-IPADDR=10.0.160.25
+IPADDR=10.0.208.25
 ONBOOT=yes
 DEVICE=eth1
 PREFIX=20
@@ -92,19 +94,23 @@ EOF
     # dedicated RDQM Network Interfaces
     #
     cat << 'EOF' > /etc/sysconfig/network-scripts/route-eth1
-10.0.128.25 via 10.0.160.1 dev eth1
-10.0.144.25 via 10.0.160.1 dev eth1
+10.0.192.25 via 10.0.208.1 dev eth1
+10.0.200.25 via 10.0.208.1 dev eth1
 EOF
     # Set a fixed hostname so that the DRBD configuration files are still ok
     hostnamectl --static set-hostname InstanceC
     # Now restart the network for the changes to take effect
-    systemctl restart network
+    #systemctl restart network
+    nmcli networking off && nmcli networking on
 }
 
 installAwsCli () {
-    curl -O https://bootstrap.pypa.io/get-pip.py
-    python get-pip.py --user
-    pip install awscli --upgrade --user
+    #curl -O https://bootstrap.pypa.io/get-pip.py
+    #python get-pip.py --user
+    #pip install awscli --upgrade --user
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
 }
 
 if [[ $# -eq 1 ]]

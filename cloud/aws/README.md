@@ -337,9 +337,9 @@ runmqsc RDQM1ALTER QMGR CHLAUTH(DISABLED)ALTER QMGR CONNAUTH(' ')DEFINE CHANN
 
 ## Testing
 
-The sample client programs passes your login userid through MQCSP structure to the Queue Manager. So, you need to create an ID in RDQM VM1,2,3. 
+The sample client programs passes your login userid through MQCSP structure to the Queue Manager. So, you need to create an ID in RDQM vm1, vm2, vm3. 
 
-Create userid in RDQM1,2,3.
+Create userid in RDQM vm1, vm2, vm3.
 ```
 adduser -a -G mqm johnc
 ```
