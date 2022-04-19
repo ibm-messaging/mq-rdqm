@@ -98,7 +98,7 @@ sftp> put setupRdqmInstance
 sftp> put configureRdqm
 ```
 
-## Creating a new AMI
+## RedHat Linux VM Configuration & Installing MQ
 
 ssh into the RedHat Linux VM that I created above.
 
@@ -135,7 +135,7 @@ sysctl -p
 
 ### Initialize secondary storage, create drbdpool volume group 
 ```
-yum install lvm2 # contains pvcreate commandspvcreate /dev/xvdbvgcreate drbdpool /dev/xvdbpvsvgs
+yum install lvm2 # contains pvcreate commandsvgcreate drbdpool /dev/xvdbpvsvgs
 exit
 sudo -i
 ```
