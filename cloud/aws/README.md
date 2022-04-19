@@ -152,7 +152,7 @@ cd MQServer
 ./mqlicense.sh -accept
 -- Identify the right kmod version: Output will be like: kmod-drbd-9.1.5_4.18.0_305-1.x86_64.rpm
 Advanced/RDQM/PreReqs/el8/kmod*/modver
--- Note: if you get "Unsupported kernel release" then download correct kmod package based on  your RHEL OS version. Refer to [link](https://www.ibm.com/support/pages/ibm-mq-replicated-data-queue-manager-kernel-modules) for supported RHEL kernel modules
+-- Note: if you get "Unsupported kernel release" then download correct kmod package based on  your RHEL OS version "https://www.ibm.com/support/pages/ibm-mq-replicated-data-queue-manager-kernel-modules". Download the correct module and upload to PreReqs/el8 folder.
 -- Install kmod package
 yum install -y Advanced/RDQM/PreReqs/el8/<output of modver command>
 -- Install drbd package
@@ -275,7 +275,7 @@ If you check on the status of the RDQM with the command `rdqmstatus -m RDQM1` yo
 
 ```
 Node:                                  
-ip-10-0-1-238.us-west-2.compute.internal
+InstanceA
 Queue manager status:                   Running
 CPU:                                    0.17
 Memory:                                 169MB
@@ -289,27 +289,27 @@ HA floating IP interface:               None
 HA floating IP address:                 None
 
 Node:                                  
-ip-10-0-2-244.us-west-2.compute.internal
+InstanceB 
 HA status:                              Synchronization in progress
 HA synchronization progress:            6.3%
-HA estimated time to completion:        2018-01-15 16:14:23
+HA estimated time to completion:        2018-01-15 10:14:20
 
 Node:                                  
-ip-10-0-3-152.us-west-2.compute.internal
+InstanceC
 HA status:                              Synchronization in progress
 HA synchronization progress:            6.4%
-HA estimated time to completion:        2018-01-15 16:14:22
+HA estimated time to completion:        2022-04-19 10:14:22
 Command '/opt/mqm/bin/rdqmstatus' run with sudo.
 ```
 
 Once the initial synchronization has completed the command should produce something like:
 
 ```
-Node:                                  
-ip-10-0-1-238.us-west-2.compute.internal
+[root@InstanceA bin]# rdqmstatus -m RDQM
+Node:                                   InstanceA
 Queue manager status:                   Running
-CPU:                                    0.00
-Memory:                                 169MB
+CPU:                                    1.82%
+Memory:                                 183MB
 Queue manager file system:              58MB used, 2.9GB allocated [2%]
 HA role:                                Primary
 HA status:                              Normal
@@ -319,14 +319,11 @@ HA preferred location:                  This node
 HA floating IP interface:               None
 HA floating IP address:                 None
 
-Node:                                  
-ip-10-0-2-244.us-west-2.compute.internal
+Node:                                   InstanceB
 HA status:                              Normal
 
-Node:                                  
-ip-10-0-3-152.us-west-2.compute.internal
+Node:                                   InstanceC
 HA status:                              Normal
-Command '/opt/mqm/bin/rdqmstatus' run with sudo.
 ```
 
 Congratulations, you have got a running RDQM.
