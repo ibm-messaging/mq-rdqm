@@ -550,7 +550,9 @@ Resources:
   PublicListenerLoadBalancer:
       Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
       Properties:
-        CrossZone: true
+        LoadBalancerAttributes:
+          - Key: load_balancing.cross_zone.enabled
+            Value: true        
         Name: PublicListenerLoadBalancer
         Scheme: internet-facing
         Subnets:
@@ -628,7 +630,9 @@ Resources:
   PrivateListenerLoadBalancer:
       Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
       Properties:
-        CrossZone: true
+        LoadBalancerAttributes:
+          - Key: load_balancing.cross_zone.enabled
+            Value: true    
         Name: PrivateListenerLoadBalancer
         Scheme: internal
         Subnets:
