@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# (C) Copyright IBM Corporation 2019
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Arguments:
+#     1 Replication IP address of node 1
+#     2 Replication IP address of node 2
+#     3 Replication IP address of node 3
+
+initialize_drbdpool () {
+# The device may need to be updated depending on your instance type
+    vgcreate drbdpool /dev/nvme1n1
+}
+
+# Step 1 - generate the rdqm.ini file
+
+cat << EOF > /var/mqm/rdqm.ini
+Node:
+    Name=InstanceA
+    HA_Replication=$1
+Node:
+    Name=InstanceB
+    HA_Replication=$2
+Node:
+    Name=InstanceC
+    HA_Replication=$3
+EOF
+
+# Step 2 - Configure the HA Group
+
+initialize_drbdpool
+/opt/mqm/bin/rdqmadm -c
+rdqmadm_result=$?
+while [[ $rdqmadm_result -ne 0 ]]
+do
+    echo "rdqmadm -c failed, sleeping"
+    sleep 30
+    /opt/mqm/bin/rdqmadm -c
+    rdqmadm_result=$?
+done
+
+# Step 3 - recreate RDQM secondaries on this node
+# You need to know the name and filesystem size of each RDQM
+#/opt/mqm/bin/crtmqm -fs 3072M -sxs DRHAQM1
+#/opt/mqm/bin/crtmqm -fs 3072M -sxs DRHAQM2
+#/opt/mqm/bin/crtmqm -fs 3072M -sxs DRHAQM3

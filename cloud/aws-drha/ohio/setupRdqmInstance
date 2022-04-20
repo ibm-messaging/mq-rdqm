@@ -1,0 +1,183 @@
+#!/bin/bash -x
+
+# (C) Copyright IBM Corporation 2019
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#
+# This script is run when an instance is created as it is registered for the
+# EC2_INSTANCE_LAUNCHING lifecycle hook.
+#
+# It attaches the appropriate Network Interface for RDQM.
+#
+# At the moment the IP addresses are hard-coded, they should ideally be passed in to this 
+# script.
+#
+# At the moment the device (eth1) is also hard-coded.
+#
+
+#
+# Arguments:
+#     1 network-interface-id of the NetworkInterface to attach, which will be different
+#       in each Availability Zone
+#
+
+# Configure the network for Availability Zone A
+configureNetworkForA () {
+    cat << 'EOF' > /etc/sysconfig/network-scripts/ifcfg-eth1
+BOOTPROTO=none
+IPADDR=10.0.192.25
+ONBOOT=yes
+DEVICE=eth1
+PREFIX=20
+EOF
+    #
+    # Set up the IP routes to allow the RDQM instances to communicate via the
+    # dedicated RDQM Network Interfaces
+    #
+    cat << 'EOF' > /etc/sysconfig/network-scripts/route-eth1
+10.0.200.25 via 10.0.192.1 dev eth1
+10.0.208.25 via 10.0.192.1 dev eth1
+10.1.192.25 via 10.0.192.1 dev eth1
+10.1.200.25 via 10.0.192.1 dev eth1
+10.1.208.25 via 10.0.192.1 dev eth1
+EOF
+    # Set a fixed hostname so that the DRBD configuration files are still ok
+    hostnamectl --static set-hostname InstanceA
+    # Now restart the network for the changes to take effect
+    #systemctl restart network
+    nmcli networking off && nmcli networking on
+}
+
+# Configure the network for Availability Zone B
+configureNetworkForB () {
+    cat << 'EOF' > /etc/sysconfig/network-scripts/ifcfg-eth1
+BOOTPROTO=none
+IPADDR=10.0.200.25
+ONBOOT=yes
+DEVICE=eth1
+PREFIX=20
+EOF
+    #
+    # Set up the IP routes to allow the RDQM instances to communicate via the
+    # dedicated RDQM Network Interfaces
+    #
+    cat << 'EOF' > /etc/sysconfig/network-scripts/route-eth1
+10.0.192.25 via 10.0.200.1 dev eth1
+10.0.208.25 via 10.0.200.1 dev eth1
+10.1.192.25 via 10.0.200.1 dev eth1
+10.1.200.25 via 10.0.200.1 dev eth1
+10.1.208.25 via 10.0.200.1 dev eth1
+EOF
+    # Set a fixed hostname so that the DRBD configuration files are still ok
+    hostnamectl --static set-hostname InstanceB
+    # Now restart the network for the changes to take effect
+    #systemctl restart network
+    nmcli networking off && nmcli networking on
+}
+
+# Configure the network for Availability Zone C
+configureNetworkForC () {
+    cat << 'EOF' > /etc/sysconfig/network-scripts/ifcfg-eth1
+BOOTPROTO=none
+IPADDR=10.0.208.25
+ONBOOT=yes
+DEVICE=eth1
+PREFIX=20
+EOF
+    #
+    # Set up the IP routes to allow the RDQM instances to communicate via the
+    # dedicated RDQM Network Interfaces
+    #
+    cat << 'EOF' > /etc/sysconfig/network-scripts/route-eth1
+10.0.192.25 via 10.0.208.1 dev eth1
+10.0.200.25 via 10.0.208.1 dev eth1
+10.1.192.25 via 10.0.208.1 dev eth1
+10.1.200.25 via 10.0.208.1 dev eth1
+10.1.208.25 via 10.0.208.1 dev eth1
+EOF
+    # Set a fixed hostname so that the DRBD configuration files are still ok
+    hostnamectl --static set-hostname InstanceC
+    # Now restart the network for the changes to take effect
+    #systemctl restart network
+    nmcli networking off && nmcli networking on
+}
+
+installAwsCli () {
+    #curl -O https://bootstrap.pypa.io/get-pip.py
+    #python get-pip.py --user
+    #pip install awscli --upgrade --user
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+}
+
+if [[ $# -eq 1 ]]
+then
+    export PATH=~/.local/bin:$PATH
+    export REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/\(.*\)[a-z]/\1/')
+    export NETWORKID=$1
+    installAwsCli
+    if [[ -n $REGION ]]
+    then
+        export INSTANCEID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+        if [[ -n $INSTANCEID ]]
+        then
+            export ASGNAME=$(aws autoscaling describe-auto-scaling-instances --instance-ids $INSTANCEID --region $REGION | grep AutoScalingGroupName | sed 's/.*: "\(.*\)".*/\1/')
+            if [[ -n $ASGNAME ]]
+            then
+                aws ec2 attach-network-interface --region $REGION --instance-id $INSTANCEID --device-index 2 --network-interface-id $NETWORKID
+                if [[ $? -eq 0 ]]
+                then
+                    aws autoscaling complete-lifecycle-action --lifecycle-action-result CONTINUE --instance-id $INSTANCEID --lifecycle-hook-name LaunchingLifecycleHook --auto-scaling-group-name $ASGNAME --region $REGION
+                    if [[ $? -eq 0 ]]
+                    then
+                        #
+                        # As we are using RHEL we need to configure the new network interface.
+                        #
+                        export AZ=$(curl -s http://169.254.169.254/latest/meta-data//placement/availability-zone)
+                        export INSTANCE=$(echo "${AZ: -1}")
+                        case $INSTANCE in
+                            a)
+                                configureNetworkForA
+                                ;;
+                            b)
+                                configureNetworkForB
+                                ;;
+                            c)
+                                configureNetworkForC
+                                ;;
+                            *)
+                                echo "Unexpected value for INSTANCE: $INSTANCE"
+                                ;;
+                        esac
+                    else
+                        echo "Failed to complete the lifecycle action"
+                    fi
+                else
+                    echo "Failed to attach network interface"
+                fi
+            else
+                echo "Failed to get ASGNAME"
+            fi
+        else
+            echo "Failed to get instance-id"
+        fi
+    else
+        echo "Failed to get Region"
+    fi
+else
+    echo "Unexpected number of arguments: $#"
+fi
+
+echo "Leaving setupRdqmInstance"
