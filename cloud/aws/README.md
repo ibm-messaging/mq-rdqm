@@ -145,9 +145,7 @@ sudo -i
 
 ### Installing IBM MQ
 
-I installed the Trial version of IBM MQ Advanced 9.2.0 for Linux. If you have spare licenses you could install the IBM MQ Advanced product. 
-
-I created a directory /root/MQ and copied the file `IBM_MQ_9.2.0_LINUX_X86-64_TRIAL.tar.gz` to it. I then ran the following:
+I created a directory /root/MQ and copied the file `mqadv_dev925_linux_x86-64.gz` to it. I then ran the following:
 ```
 cd MQ
 tar -xvzf mqadv_dev925_linux_x86-64.gz
@@ -231,7 +229,7 @@ Create AMI image, navigate to AWS Console > Instances > Select RHEL VM > Actions
 Check the AMI image status, and note down the AMI ID. This ami-id will be populated in Cloudformation rdqm.template.yaml file.
 
 
-## Deploy the template
+## Deploy the Cloudformation template
 
 When you deploy the template you will be prompted for a lot of information, including the AMI to use where you should specify the ID of the AMI you created.
 
@@ -258,7 +256,6 @@ The simplest command to create an RDQM is something like `crtmqm -p 1501 -sx RDQ
 sudo -s
 su - mqm
 crtmqm -sx -p 1501 RDQM1
-There are 90 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 Secondary queue manager created on 'ip-10-0-2-244.us-west-2.compute.internal'.
 Secondary queue manager created on 'ip-10-0-3-152.us-west-2.compute.internal'.
