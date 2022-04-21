@@ -118,9 +118,9 @@ Additional Storage section, add extra storage like below:
 Same as above.
 
 
-## Download IBM MQ Developer version
+## Download IBM MQ Advanced Developer version
 
-The 90-day trial version can be downloaded from [link] (https://ibm-cloud.slack.com/archives/C3QKGL8KV/p1625488377312700). 
+I downloaded the MQ Advanced Developer version from [link] (https://www14.software.ibm.com/cgi-bin/weblap/lap.pl?popup=Y&li_formnum=L-APIG-BYHCL7&accepted_url=https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev925_linux_x86-64.tar.gz).
 
 Transfer mqadv_dev925_linux_x86-64.gz, setupRDQMInstance, configureRdqm files to RHEL VM.
 
@@ -453,7 +453,7 @@ REFRESH SECURITY (*)DEFINE CHANNEL(RDQM.SVRCONN) CHLTYPE(SVRCONN)DEFINE QLOCAL
 ```
 
 
-## Failover Testing
+## Testing DR Failover
 
 ### Failover to DR (Virginia)
 Ohio
