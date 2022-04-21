@@ -275,13 +275,13 @@ Check the AMI image status, and note down the AMI ID. This ami-id will be popula
 Same as above.
 
 
-## Ohio - Deploy the template
+## Ohio - Deploy the Cloudformation template
 
 When you deploy the template you will be prompted for a lot of information, including the AMI to use where you should specify the ID of the AMI you created.
 
 I suggest you update the defaults (already updated above) in your copy of the template to avoid having to enter the same information each time you try deploying the template.
 
-Deploy the modifi ed template (rdqm.template.yaml). Navigte to AWS Console > Cloudformation > Create Stack > With newResources (standard) > Upload a template file > browse to rdqm.template.yaml.
+Deploy the modifi ed template (rdqm.template.yaml). Navigte to AWS Console > Cloudformation > Create Stack > With newResources (standard) > Upload a template file > browse to ohio/rdqm.template.yaml.
 
 Populate the keypair, ami-id that captured above.
 
@@ -289,7 +289,7 @@ Finish creating the Cloudformation template. Make sure the Cloudformation Stack 
 ![](images/rdqm-vms.png)
 
 
-## Virginia - Deploy the template
+## Virginia - Deploy the Cloudformation template
 Same as above.
 
 
