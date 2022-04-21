@@ -114,6 +114,10 @@ Select your-vpc, a Public or Private Subnet.
 Additional Storage section, add extra storage like below:
 ![](images/rhel-vm-storage.png)
 
+## Virginia - Create RedHat Linux VM
+Same as above.
+
+
 ## Download IBM MQ Developer version
 
 The 90-day trial version can be downloaded from [link] (https://ibm-cloud.slack.com/archives/C3QKGL8KV/p1625488377312700). 
@@ -133,9 +137,6 @@ sftp -i "rdqm-virginia.pem" ec2-user@ec2-xx-xxx-xx-xx.us-east-2.compute.amazonaw
 sftp> put virginia/setupRdqmInstance
 sftp> put virginia/configureRdqm
 ```
-
-## Virginia - Create RedHat Linux VM
-Same as above.
 
 
 ## Ohio - RedHat Linux VM Configuration & Installing MQ
@@ -184,17 +185,17 @@ sudo -i
 
 I installed the Trial version of IBM MQ Advanced 9.2.0 for Linux. If you have spare licenses you could install the IBM MQ Advanced product. 
 
-I created a directory /root/MQ and copied the file `IBM_MQ_9.2.0_LINUX_X86-64_TRIAL.tar.gz` to it. I then ran the following:
+I created a directory /root/MQ and copied the file `mqadv_dev925_linux_x86-64.gz` to it. I then ran the following:
 ```
 cd MQ
-tar -xvzf IBM_MQ_9.2.0_LINUX_X86-64_TRIAL.tar.gz
+tar -xvzf mqadv_dev925_linux_x86-64.gz
 cd MQServer
 ./mqlicense.sh -accept
 -- Identify the right kmod version: Output will be like: kmod-drbd-9.1.5_4.18.0_305-1.x86_64.rpm
 Advanced/RDQM/PreReqs/el8/kmod*/modver
 -- Note: if you get "Unsupported kernel release" then download correct kmod package based on  your RHEL OS version "https://www.ibm.com/support/pages/ibm-mq-replicated-data-queue-manager-kernel-modules". Download the correct module and upload to PreReqs/el8 folder.
 -- Install kmod package
-yum install -y Advanced/RDQM/PreReqs/el8/<output of modver command>
+yum install -y Advanced/RDQM/PreReqs/el8/kmod-drbd-9/kmod-drbd-9.1.5_4.18.0_305-1.x86_64.rpm
 -- Install drbd package
 yum install -y Advanced/RDQM/PreReqs/el8/drbd-utils-9/*yum install -y Advanced/RDQM/PreReqs/el8/pacemaker-2/*yum install -y MQSeriesGSKit* MQSeriesServer* MQSeriesRuntime* MQSeriesSamples* MQSeriesClient*yum install -y Advanced/RDQM/MQSeriesRDQM*yum install -y unzip
 cd /opt/mqm/bin 
@@ -202,6 +203,7 @@ cd /opt/mqm/bin
 /opt/mqm/bin/setmqinst -i -p /opt/mqm
 
 usermod -a -G haclient,mqm ec2-user
+usermod -a -G haclient mqm
 ```
 
 I then added the following line to /home/ec2-user/.bash_profile:
@@ -218,9 +220,10 @@ I ran mqconfig which reported PASS for everything.
 I ran `dspmqver` which produced:
 
 ```
+[ec2-user@ip-172-31-45-17 ~]$ dspmqver
 Name:        IBM MQ
-Version:     9.2.0.0
-Level:       p920-L200710.TRIAL
+Version:     9.2.5.0
+Level:       p925-L220208.DE
 BuildType:   IKAP - (Production)
 Platform:    IBM MQ for Linux (x86-64 platform)
 Mode:        64-bit
@@ -231,8 +234,8 @@ InstDesc:
 Primary:     Yes
 InstPath:    /opt/mqm
 DataPath:    /var/mqm
-MaxCmdLevel: 920
-LicenseType: Trial
+MaxCmdLevel: 925
+LicenseType: Developer
 ```
 
 ### Granting sudo access
@@ -251,7 +254,7 @@ yum install -y policycoreutils-python-utils
 semanage permissive -a drbd_t
 ```
 OR you can update global setting like below,
-```vi /etc/selinux/confi gSELINUX=permissive
+```vi /etc/selinux/configSELINUX=permissive
 ```
 
 ## Virginia - RedHat Linux VM Configuration & Installing MQ
@@ -330,19 +333,19 @@ Create 3 Queue Managers, one from each Terminal.
 Ohio Region
 ```
 Node-3
-crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7004 -fs 3072M DRHAQM1
+crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7001 -fs 3072M DRHAQM1
 There are 87 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 
 Node-2
-crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7004 -fs 3072M DRHAQM1
+crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7001 -fs 3072M DRHAQM1
 There are 87 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 
 Node-1
-crtmqm -sx -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7004 -fs 3072M DRHAQM1
+crtmqm -sx -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7001 -fs 3072M DRHAQM1
 There are 87 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ queue manager created.
@@ -362,19 +365,19 @@ crtmqm -sx -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.20
 Virginia Region
 ```
 Node-3
-crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7004 -fs 3072M DRHAQM1
+crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7001 -fs 3072M DRHAQM1
 There are 89 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 
 Node-2
-crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7004 -fs 3072M DRHAQM1
+crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7001 -fs 3072M DRHAQM1
 There are 89 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 
 Node-1
-crtmqm -sx -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7004 -fs 3072M DRHAQM1
+crtmqm -sx -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7001 -fs 3072M DRHAQM1
 There are 89 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
@@ -450,7 +453,35 @@ REFRESH SECURITY (*)DEFINE CHANNEL(RDQM.SVRCONN) CHLTYPE(SVRCONN)DEFINE QLOCAL
 ```
 
 
-## Testing
+## Failover Testing
+
+### Failover to DR (Virginia)
+Ohio
+```
+[mqm@InstanceA ~]$ endmqm DRHAQM1
+Replicated data queue manager disabled.
+Quiesce request accepted. The queue manager will stop when all outstanding work
+is complete.
+
+[root@InstanceA ec2-user]# rdqmdr -s -m DRHAQM1
+Queue manager 'DRHAQM1' has been made the DR secondary on this node.
+
+[root@InstanceA ec2-user]# dspmq
+QMNAME(DRHAQM1)                                           STATUS(Ended immediately)
+```
+Virginia
+```
+root@InstanceA ec2-user]# rdqmdr -p -m DRHAQM1
+Queue manager 'DRHAQM1' has been made the DR primary on this node.
+
+[root@InstanceA ec2-user]# dspmq
+QMNAME(DRHAQM1)                                           STATUS(Running)
+```
+
+Repeat the above to failback to the main site (Ohio).
+
+
+## Testing Messages
 
 The sample client programs passes your login userid through MQCSP structure to the Queue Manager. So, you need to create an ID in RDQM vm1, vm2, vm3. 
 
