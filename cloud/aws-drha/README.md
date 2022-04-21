@@ -126,7 +126,7 @@ Transfer mqadv_dev925_linux_x86-64.gz, setupRDQMInstance, configureRdqm files to
 
 Ohio - RHEL VM
 ``` 
-sftp -i "rdqm-.pem" ec2-user@ec2-xx-xxx-xx-xx.us-east-2.compute.amazonaws.comsftp> put mqadv_dev925_linux_x86-64.gz
+sftp -i "rdqm-ohio.pem" ec2-user@ec2-xx-xxx-xx-xx.us-east-2.compute.amazonaws.comsftp> put mqadv_dev925_linux_x86-64.gz
 sftp> put ohio/setupRdqmInstance
 sftp> put ohio/configureRdqm
 ```
