@@ -53,11 +53,20 @@ VpcId : Default: <vpc-id-value-captured-above>PrivateSubnetA : Default: <Privat
 Similarly polulate the below;PrivateSubnetB : Default: <Private subnet 2A-ID value-captured-above>RdqmPrivateSubnetB : Default: <Private subnet 2B-value-captured-above>RdqmAddressB : Default: <Private subnet 2B - IPv4 CIDR -10.0.200.<nn>>PrivateSubnetC : Default: <Private subnet 3A-value-captured-above>RdqmPrivateSubnetC : Default: <Private subnet 3B- id value-captured-above>RdqmAddressC: Default: <Private subnet 3B - IPv4 CIDR -10.0.208.<nn>>
 ```
 
-### setupRDQMInstance
+### ohio/setupRDQMInstance
 Edit and populate IP addresses under configureNetworkForA, configureNetworkForB, configureNetworkForC functions.
 
 ```
-configureNetworkForAIPADDR=10.0.192.25                  # RdqmAddressA configured above in rdqm.template.yaml #10.0.200.25 via 10.0.192.1 dev eth1 # Where, 10.0.200.25 isRdqmAddressB above, 10.0.192.1 is "Private Subnet 1B IpV4CIDR + 1. Ex: 10.0.192.0 will be 10.0.192.1) #10.0.208.25 via 10.0.192.1 dev eth1 # Where, 10.0.208.25 is RdqmAddressB above #Similarly, configure other functions.configureNetworkForBIPADDR=10.0.200.2510.0.192.25 via 10.0.200.1 dev eth110.0.208.25 via 10.0.200.1 dev eth1configureNetworkForCIPADDR=10.0.208.2510.0.192.25 via 10.0.208.1 dev eth110.0.200.25 via 10.0.208.1 dev eth1
+configureNetworkForAIPADDR=10.0.192.25                  # RdqmAddressA configured above in rdqm.template.yaml #10.0.200.25 via 10.0.192.1 dev eth1 # Where, 10.0.200.25 isRdqmAddressB above, 10.0.192.1 is "Private Subnet 1B IpV4CIDR + 1. Ex: 10.0.192.0 will be 10.0.192.1) #10.0.208.25 via 10.0.192.1 dev eth1 # Where, 10.0.208.25 is RdqmAddressB above #10.1.192.25 via 10.0.192.1 dev eth1  (DR RDQM IP NODE1)
+10.1.200.25 via 10.0.192.1 dev eth1  (DR RDQM IP NODE2)
+10.1.208.25 via 10.0.192.1 dev eth1  (DR RDQM IP NODE3)
+Similarly, configure other functions.configureNetworkForBIPADDR=10.0.200.2510.0.192.25 via 10.0.200.1 dev eth110.0.208.25 via 10.0.200.1 dev eth1
+10.1.192.25 via 10.0.200.1 dev eth1
+10.1.200.25 via 10.0.200.1 dev eth1
+10.1.208.25 via 10.0.200.1 dev eth1configureNetworkForCIPADDR=10.0.208.2510.0.192.25 via 10.0.208.1 dev eth110.0.200.25 via 10.0.208.1 dev eth1
+10.1.192.25 via 10.0.208.1 dev eth1
+10.1.200.25 via 10.0.208.1 dev eth1
+10.1.208.25 via 10.0.208.1 dev eth1
 The scripts will be placed in RHEL AMI Image Virtual machine under /root/bin folder.
 ```
 
@@ -105,13 +114,24 @@ Select your-vpc, a Public or Private Subnet.
 Additional Storage section, add extra storage like below:
 ![](images/rhel-vm-storage.png)
 
-## Download IBM MQ Trial version
+## Download IBM MQ Developer version
 
-The 90-day trial version can be downloaded from [link] (https://www.ibm.com/docs/en/ibm-mq/9.2?topic=roadmap-mq-downloads). Transfer IBM_MQ_9.2.0_LINUX_X86-64_TRIAL.tar.gz, setupRDQMInstance, configureRdqm files to RHEL VM.
+The 90-day trial version can be downloaded from [link] (https://ibm-cloud.slack.com/archives/C3QKGL8KV/p1625488377312700). 
+
+Transfer mqadv_dev925_linux_x86-64.gz, setupRDQMInstance, configureRdqm files to RHEL VM.
+
+Ohio - RHEL VM
 ``` 
-sftp -i "rdqm-bastion.pem" ec2-user@ec2-xx-xxx-xx-xx.us-east-2.compute.amazonaws.comsftp> put IBM_MQ_9.2.5_LINUX_X86-64.tar.gz
-sftp> put setupRdqmInstance
-sftp> put configureRdqm
+sftp -i "rdqm-.pem" ec2-user@ec2-xx-xxx-xx-xx.us-east-2.compute.amazonaws.comsftp> put mqadv_dev925_linux_x86-64.gz
+sftp> put ohio/setupRdqmInstance
+sftp> put ohio/configureRdqm
+```
+
+Virginia - RHEL VM
+``` 
+sftp -i "rdqm-virginia.pem" ec2-user@ec2-xx-xxx-xx-xx.us-east-2.compute.amazonaws.comsftp> put mqadv_dev925_linux_x86-64.gz
+sftp> put virginia/setupRdqmInstance
+sftp> put virginia/configureRdqm
 ```
 
 ## Virginia - Create RedHat Linux VM
@@ -449,7 +469,7 @@ I will be using amqsphac mq ha client program to test the connectivity to RDQM1.
 I have installed MQ Toolkit for Mac on my computer, which comes with IBM MQ Sample client programs. You can download MQ Toolkit for mac from [here](https://developer.ibm.com/tutorials/mq-macos-dev/).
 
 ```
-export MQSERVER="RDQM.SVRCONN/TCP/PublicListenerLoadBalancer-xxxxx.elb.us-east-2.amazonaws.com(1501)"$ amqsphac TEST.IN RDQM1MacBook-Pro-2:~ myuserid$ amqsphac TEST.IN RDQM1Sample AMQSPHAC starttarget queue is TEST.INmessage <Message 1>
+export MQSERVER="RDQM.SVRCONN/TCP/PublicListenerLoadBalancer-xxxxx.elb.us-east-2.amazonaws.com(1501)"$ amqsphac TEST.IN DRHAQM1MacBook-Pro-2:~ myuserid$ amqsphac TEST.IN DRHAQM1Sample AMQSPHAC starttarget queue is TEST.INmessage <Message 1>
 message <Message 2>
 ```
 
