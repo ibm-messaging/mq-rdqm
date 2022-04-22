@@ -340,7 +340,7 @@ crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.2
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 
-Node-1
+Node-1 (Primary)
 crtmqm -sx -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7001 -fs 3072M DRHAQM1
 Creating replicated data queue manager configuration.
 IBM MQ queue manager 'DRHAQM1' created.
@@ -355,6 +355,22 @@ Replicated data queue manager enabled.
 Issue the following command on the remote HA group to create the DR/HA
 secondary queue manager:
 crtmqm -sx -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7001 -fs 3072M DRHAQM1
+
+Create DRHAQM2
+Node-3
+crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7002 -fs 3072M DRHAQM2
+Node-1
+crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7002 -fs 3072M DRHAQM2
+Node-2 (Primary)
+crtmqm -sx -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7002 -fs 3072M DRHAQM2
+
+Create DRHAQM3
+Node-1
+crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7003 -fs 3072M DRHAQM3
+Node-2
+crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7003 -fs 3072M DRHAQM3
+Node-3 (Primary)
+crtmqm -sx -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7003 -fs 3072M DRHAQM3
 ```
 
 Virginia Region
@@ -369,15 +385,29 @@ crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.2
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 
-Node-1
+Node-1 (Primary)
 crtmqm -sx -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7001 -fs 3072M DRHAQM1
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 Enabling replicated data queue manager.
 Replicated data queue manager enabled.
-```
 
-Similary, if you want to to create DRHAQM2 (node2's), DRHAQM3 (node3's).
+Create DRHAQM2
+Node-3
+crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7002 -fs 3072M DRHAQM2
+Node-1
+crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7002 -fs 3072M DRHAQM2
+Node-2 (Primary)
+crtmqm -sx -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7002 -fs 3072M DRHAQM2
+
+Create DRHAQM3
+Node-1
+crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7003 -fs 3072M DRHAQM3
+Node-2
+crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7003 -fs 3072M DRHAQM3
+Node-3 (Primary)
+crtmqm -sx -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7003 -fs 3072M DRHAQM3
+```
 
 If you check on the status of the RDQM with the command `rdqmstatus -m DRHAQM1` you should see something like:
 
