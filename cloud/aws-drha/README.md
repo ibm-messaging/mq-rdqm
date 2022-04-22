@@ -1,6 +1,6 @@
 # Deploying IBM(R) MQ Advanced RDQM DR/HA on AWS
 
-This version of the sample shows how to deploy the Replicated Data Queue Manager Disaster Recovery High Availability (RDQM DR/HA) Queue Manager in two AWS regiions.
+This version of the sample shows how to deploy the Replicated Data Queue Manager Disaster Recovery High Availability (RDQM DR/HA) Queue Manager in two AWS regiions. This is an Active/Active/Active scenario, which means you can run a Queue Manager in each Availability zone.
 
 1. It uses an AutoScalingGroup with a LaunchConfiguration in each Availability Zone to automate the creation of each instance, including replacing an instance automatically if one fails
 2. It uses a separate NetworkInterface for each Instance that is dedicated to RDQM
@@ -183,8 +183,6 @@ sudo -i
 
 ### Installing IBM MQ
 
-I installed the Trial version of IBM MQ Advanced 9.2.0 for Linux. If you have spare licenses you could install the IBM MQ Advanced product. 
-
 I created a directory /root/MQ and copied the file `mqadv_dev925_linux_x86-64.gz` to it. I then ran the following:
 ```
 cd MQ
@@ -334,21 +332,18 @@ Ohio Region
 ```
 Node-3
 crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7001 -fs 3072M DRHAQM1
-There are 87 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 
 Node-2
 crtmqm -sxs -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7001 -fs 3072M DRHAQM1
-There are 87 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 
 Node-1
 crtmqm -sx -rr p -rl 10.0.192.25,10.0.200.25,10.0.208.25 -ri 10.1.192.25,10.1.200.25,10.1.208.25 -rp 7001 -fs 3072M DRHAQM1
-There are 87 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
-IBM MQ queue manager created.
+IBM MQ queue manager 'DRHAQM1' created.
 Directory '/var/mqm/vols/drhaqm1/qmgr/drhaqm1' created.
 The queue manager is associated with installation 'Installation1'.
 Creating or replacing default objects for queue manager 'DRHAQM1'.
@@ -359,7 +354,7 @@ Enabling replicated data queue manager.
 Replicated data queue manager enabled.
 Issue the following command on the remote HA group to create the DR/HA
 secondary queue manager:
-crtmqm -sx -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7004 -fs 3072M DRHAQM1
+crtmqm -sx -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7001 -fs 3072M DRHAQM1
 ```
 
 Virginia Region
@@ -372,13 +367,11 @@ IBM MQ secondary queue manager created.
 
 Node-2
 crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7001 -fs 3072M DRHAQM1
-There are 89 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 
 Node-1
 crtmqm -sx -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7001 -fs 3072M DRHAQM1
-There are 89 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 Enabling replicated data queue manager.
@@ -395,18 +388,19 @@ rdqmstatus -m DRHAQM1
 Node:                                   InstanceA
 Queue manager status:                   Running
 CPU:                                    0.00%
-Memory:                                 179MB
+Memory:                                 182MB
 Queue manager file system:              58MB used, 2.9GB allocated [2%]
 HA role:                                Primary
 HA status:                              Normal
 HA control:                             Enabled
 HA current location:                    This node
 HA preferred location:                  This node
+HA blocked location:                    None
 HA floating IP interface:               None
 HA floating IP address:                 None
 DR role:                                Primary
 DR status:                              Normal
-DR port:                                7002
+DR port:                                7001
 DR local IP address:                    10.0.192.25
 DR remote IP address list:              10.1.192.25,10.1.200.25,10.1.208.25
 DR current remote IP address:           10.1.192.25
@@ -425,14 +419,15 @@ Node:                                   InstanceA
 Queue manager status:                   Ended immediately
 HA role:                                Primary
 HA status:                              Normal
-HA control:                             Disabled
+HA control:                             Enabled
 HA current location:                    This node
 HA preferred location:                  This node
+HA blocked location:                    None
 HA floating IP interface:               None
 HA floating IP address:                 None
 DR role:                                Secondary
 DR status:                              Normal
-DR port:                                7002
+DR port:                                7001
 DR local IP address:                    10.1.192.25
 DR remote IP address list:              10.0.192.25,10.0.200.25,10.0.208.25
 DR current remote IP address:           10.0.192.25
@@ -458,16 +453,8 @@ REFRESH SECURITY (*)DEFINE CHANNEL(RDQM.SVRCONN) CHLTYPE(SVRCONN)DEFINE QLOCAL
 ### Failover to DR (Virginia)
 Ohio
 ```
-[mqm@InstanceA ~]$ endmqm DRHAQM1
-Replicated data queue manager disabled.
-Quiesce request accepted. The queue manager will stop when all outstanding work
-is complete.
-
 [root@InstanceA ec2-user]# rdqmdr -s -m DRHAQM1
 Queue manager 'DRHAQM1' has been made the DR secondary on this node.
-
-[root@InstanceA ec2-user]# dspmq
-QMNAME(DRHAQM1)                                           STATUS(Ended immediately)
 ```
 Virginia
 ```
@@ -488,8 +475,7 @@ The sample client programs passes your login userid through MQCSP structure to t
 Create userid in Ohio vm1, vm2, vm3.
 ```
 sudo -s
-adduser johnc
-usermod -a -G mqm sbodapati
+adduser sbodapati && usermod -a -G mqm sbodapati 
 ```
 
 I will use the PublicListenerLoadBalancer DNS address to test from my computer. You can use also the PrivateListenerLoadBalancer to test from the Bastion Server.
