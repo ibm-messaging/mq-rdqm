@@ -361,7 +361,6 @@ Virginia Region
 ```
 Node-3
 crtmqm -sxs -rr s -rl 10.1.192.25,10.1.200.25,10.1.208.25 -ri 10.0.192.25,10.0.200.25,10.0.208.25 -rp 7001 -fs 3072M DRHAQM1
-There are 89 days left in the trial period for this copy of IBM MQ.
 Creating replicated data queue manager configuration.
 IBM MQ secondary queue manager created.
 
