@@ -29,11 +29,11 @@
 #include "log.h"
 #include "options.h"
 
-void *messageBuffer;
+extern void *messageBuffer;
 
 MQLONG CompCode;
 MQLONG Reason;
-MQHOBJ Hobj;
+extern MQHOBJ Hobj;
 MQCSP csp = {MQCSP_DEFAULT};
 
 /*
@@ -77,7 +77,7 @@ int putMessage(int batchNumber, int messageNumber) {
     }
 
     if (verbosity > 2) {
-        printf("Message is \"%s\"\n", messageBuffer);
+        printf("Message is \"%s\"\n", (char *)messageBuffer);
     }
 
     MQPUT(Hconn,

@@ -29,7 +29,7 @@
 #include "log.h"
 #include "options.h"
 
-void *messageBuffer;
+extern void *messageBuffer;
 
 MQLONG CompCode;
 MQLONG Reason;
@@ -84,14 +84,14 @@ int getMessage(int batchNumber, int messageNumber) {
             printf("Message %d got successfully\n", messageNumber);
         }
         if (verbosity > 2) {
-            printf("Message is \"%s\"\n", messageBuffer);
+            printf("Message is \"%s\"\n", (char *)messageBuffer);
         }
     } else if (CompCode == MQCC_WARNING) {
         if (Reason == MQRC_TRUNCATED_MSG_ACCEPTED) {
             if (verbosity > 2) {
                 // Terminate buffer as original message was longer
                 ((char *)(messageBuffer))[messageSize - 1] = '\0';
-                printf("Truncated Message is \"%s\"\n", messageBuffer);
+                printf("Truncated Message is \"%s\"\n", (char *)messageBuffer);
             }
         } else {
             // Just give up and log the error
